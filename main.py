@@ -59,9 +59,8 @@ while 1:
                 key_pressed[event.key] = False
 
     # Update position
-    newx = player.rect.center[0] + player.speed*(key_pressed[pygame.K_RIGHT] - key_pressed[pygame.K_LEFT])
-    newy = player.rect.center[1] + player.speed*(key_pressed[pygame.K_DOWN] - key_pressed[pygame.K_UP])
-    player.rect.center = (newx, newy)
+    player.rect.x += player.speed*(key_pressed[pygame.K_RIGHT] - key_pressed[pygame.K_LEFT])
+    player.rect.y += player.speed*(key_pressed[pygame.K_DOWN] - key_pressed[pygame.K_UP])
 
     # Check collision
     if player.rect.left < 0:
