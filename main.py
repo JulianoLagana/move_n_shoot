@@ -4,7 +4,7 @@ pygame.init()
 
 
 class Player:
-    def __init__(self, sz=None, position=None, img_filename='player.bmp'):
+    def __init__(self, position=None, sz=None, img_filename='player.bmp'):
 
         self.START_SPEED = 10
         self.MAX_SPEED = 40
@@ -12,6 +12,8 @@ class Player:
         # Default value for position
         if position is None:
             self.position = [0, 0]
+        else:
+            self.position = position
 
         # Speed and acceleration initializations
         self.speed = self.START_SPEED
@@ -35,63 +37,79 @@ class Player:
         scr.blit(self.img, self.get_rect())
 
 
-size = width, height = 1600, 800
-screen = pygame.display.set_mode(size)
-clock = pygame.time.Clock()
+class Game:
+    def __init__(self, width=1600, height=800):
 
-# Initialize dictionary for key presses
-key_pressed = {}
-for key in [pygame.K_LEFT, pygame.K_RIGHT, pygame.K_DOWN, pygame.K_UP]:
-    key_pressed[key] = False
+        # Create screen for the game
+        self.screen_width = width
+        self.screen_height = height
+        self.screen = pygame.display.set_mode((width, height))
+        self.clock = pygame.time.Clock()
 
-# Load player
-player = Player([75, 75])
+        # Initialize dictionary for key presses
+        self.key_pressed = {}
+        for key in [pygame.K_LEFT, pygame.K_RIGHT, pygame.K_DOWN, pygame.K_UP]:
+            self.key_pressed[key] = False
+
+        # Load player
+        self.player = Player([37.5, 37.5])
+
+    def handle_events(self):
+
+        for event in pygame.event.get():
+
+            # Handle closing event
+            if event.type == pygame.QUIT:
+                sys.exit()
+
+            # Handle key presses
+            if event.type == pygame.KEYDOWN:
+                if event.key in self.key_pressed:
+                    self.key_pressed[event.key] = True
+
+            # Handle key releases
+            if event.type == pygame.KEYUP:
+                if event.key in self.key_pressed:
+                    self.key_pressed[event.key] = False
+
+    def update_physics(self):
+
+        # Update position
+        self.player.position[0] += self.player.speed * (self.key_pressed[pygame.K_RIGHT] - self.key_pressed[pygame.K_LEFT])
+        self.player.position[1] += self.player.speed * (self.key_pressed[pygame.K_DOWN] - self.key_pressed[pygame.K_UP])
+
+        # Check collisions
+        r = self.player.get_rect()
+        if r.left < 0:
+            self.player.position[0] = r.width / 2
+        if r.top < 0:
+            self.player.position[1] = r.height / 2
+        if r.right > self.screen_width:
+            self.player.position[0] = self.screen_width - r.width / 2
+        if r.bottom > self.screen_height:
+            self.player.position[1] = self.screen_height - r.height / 2
+
+        # Update velocity
+        if self.key_pressed[pygame.K_LEFT] or \
+                self.key_pressed[pygame.K_RIGHT] or \
+                self.key_pressed[pygame.K_UP] or \
+                self.key_pressed[pygame.K_DOWN]:
+            if self.player.speed <= self.player.MAX_SPEED:
+                self.player.speed += 1
+        else:
+            self.player.speed = self.player.START_SPEED
+
+    def draw_frame(self):
+        self.screen.fill((0, 0, 0))
+        self.player.draw(self.screen)
+        pygame.display.flip()
+        self.clock.tick(60)
+
+
+myGame = Game()
 
 while 1:
-    clock.tick(60)
+    myGame.handle_events()
+    myGame.update_physics()
+    myGame.draw_frame()
 
-    for event in pygame.event.get():
-
-        # Handle closing event
-        if event.type == pygame.QUIT:
-            sys.exit()
-
-        # Handle key presses
-        if event.type == pygame.KEYDOWN:
-            if event.key in key_pressed:
-                key_pressed[event.key] = True
-
-        # Handle key releases
-        if event.type == pygame.KEYUP:
-            if event.key in key_pressed:
-                key_pressed[event.key] = False
-
-    # Update position
-    player.position[0] += player.speed*(key_pressed[pygame.K_RIGHT] - key_pressed[pygame.K_LEFT])
-    player.position[1] += player.speed*(key_pressed[pygame.K_DOWN] - key_pressed[pygame.K_UP])
-
-    # Check collision
-    r = player.get_rect()
-    if r.left < 0:
-        player.position[0] = r.width / 2
-    if r.top < 0:
-        player.position[1] = r.height / 2
-    if r.right > width:
-        player.position[0] = width - r.width/2
-    if r.bottom > height:
-        player.position[1] = height - r.height/2
-
-    # Update velocity
-    if key_pressed[pygame.K_LEFT] or  \
-       key_pressed[pygame.K_RIGHT] or \
-       key_pressed[pygame.K_UP] or    \
-       key_pressed[pygame.K_DOWN]:
-        if player.speed <= player.MAX_SPEED:
-            player.speed += 1
-    else:
-        player.speed = player.START_SPEED
-
-    # Update display
-    screen.fill((0, 0, 0))
-    player.draw(screen)
-    pygame.display.flip()
