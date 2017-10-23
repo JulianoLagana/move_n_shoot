@@ -6,7 +6,6 @@ pygame.init()
 class Player:
     def __init__(self, position=None, sz=None, img_filename='player.bmp'):
 
-        self.START_SPEED = 10
         self.MAX_SPEED = 40
 
         # Default value for position
@@ -15,9 +14,9 @@ class Player:
         else:
             self.position = position
 
-        # Speed and acceleration initializations
-        self.speed = self.START_SPEED
-        self.accel = 1
+        # Velocity and acceleration initializations
+        self.velocity = [0, 0]
+        self.acceleration = [0, 0]
 
         # Load image and optionally resize it
         temp = pygame.image.load(img_filename)
@@ -74,30 +73,47 @@ class Game:
 
     def update_physics(self):
 
-        # Update position
-        self.player.position[0] += self.player.speed * (self.key_pressed[pygame.K_RIGHT] - self.key_pressed[pygame.K_LEFT])
-        self.player.position[1] += self.player.speed * (self.key_pressed[pygame.K_DOWN] - self.key_pressed[pygame.K_UP])
+        delta_t = 1/60
+        alpha = 3000
+        k = 1500
+
+        # Update position (CA model)
+        self.player.position[0] += self.player.velocity[0] * delta_t + self.player.acceleration[0] * (delta_t ** 2) / 2
+        self.player.position[1] += self.player.velocity[1] * delta_t + self.player.acceleration[1] * (delta_t ** 2) / 2
+
+        # Update velocity (CA model)
+        self.player.velocity[0] += self.player.acceleration[0] * delta_t
+        self.player.velocity[1] += self.player.acceleration[1] * delta_t
+
+        # Threshold the velocities (this makes the player stop eventually, if no acceleration is given)
+        if abs(self.player.velocity[0]) < 10:
+            self.player.velocity[0] = 0
+        if abs(self.player.velocity[1]) < 10:
+            self.player.velocity[1] = 0
+
+        # Update acceleration
+        self.player.acceleration[0] = alpha * (self.key_pressed[pygame.K_RIGHT] - self.key_pressed[pygame.K_LEFT])
+        self.player.acceleration[1] = alpha * (self.key_pressed[pygame.K_DOWN] - self.key_pressed[pygame.K_UP])
+
+        speed = (self.player.velocity[0]**2 + self.player.velocity[1]**2)**0.5
+        if speed > 0.1:
+            self.player.acceleration[0] -= self.player.velocity[0] / speed * k
+            self.player.acceleration[1] -= self.player.velocity[1] / speed * k
 
         # Check collisions
         r = self.player.get_rect()
         if r.left < 0:
             self.player.position[0] = r.width / 2
+            self.player.velocity[0] = -self.player.velocity[0]*0.8
         if r.top < 0:
             self.player.position[1] = r.height / 2
+            self.player.velocity[1] = -self.player.velocity[1]*0.8
         if r.right > self.screen_width:
             self.player.position[0] = self.screen_width - r.width / 2
+            self.player.velocity[0] = -self.player.velocity[0]*0.8
         if r.bottom > self.screen_height:
             self.player.position[1] = self.screen_height - r.height / 2
-
-        # Update velocity
-        if self.key_pressed[pygame.K_LEFT] or \
-                self.key_pressed[pygame.K_RIGHT] or \
-                self.key_pressed[pygame.K_UP] or \
-                self.key_pressed[pygame.K_DOWN]:
-            if self.player.speed <= self.player.MAX_SPEED:
-                self.player.speed += 1
-        else:
-            self.player.speed = self.player.START_SPEED
+            self.player.velocity[1] = -self.player.velocity[1]*0.8
 
     def draw_frame(self):
         self.screen.fill((0, 0, 0))
