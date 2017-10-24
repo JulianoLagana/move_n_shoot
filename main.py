@@ -19,11 +19,17 @@ class Player:
         self.acceleration = [0, 0]
 
         # Load image and optionally resize it
-        temp = pygame.image.load(img_filename)
+        temp = pygame.image.load(img_filename).convert()
         if sz is None:
             self.img = temp
         else:
             self.img = pygame.transform.scale(temp, sz)
+
+        # Crosshair initialization
+        self.crosshair = [200, 200]
+        temp = pygame.image.load('crosshair.bmp').convert()
+        self.crosshair_img = pygame.transform.scale(temp, (70, 70))
+        self.crosshair_img.set_colorkey((0, 0, 0))
 
     # Returns rectangle around the player image
     def get_rect(self):
@@ -34,6 +40,10 @@ class Player:
     # Draws the player to the screen
     def draw(self, scr):
         scr.blit(self.img, self.get_rect())
+
+        r_crosshair = self.crosshair_img.get_rect()
+        r_crosshair.center = self.crosshair
+        scr.blit(self.crosshair_img, r_crosshair)
 
 
 class Game:
@@ -47,7 +57,8 @@ class Game:
 
         # Initialize dictionary for key presses
         self.key_pressed = {}
-        for key in [pygame.K_LEFT, pygame.K_RIGHT, pygame.K_DOWN, pygame.K_UP]:
+        for key in [pygame.K_LEFT, pygame.K_RIGHT, pygame.K_DOWN, pygame.K_UP,
+                    pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d]:
             self.key_pressed[key] = False
 
         # Load player
@@ -86,9 +97,9 @@ class Game:
         self.player.velocity[1] += self.player.acceleration[1] * delta_t
 
         # Threshold the velocities (this makes the player stop eventually, if no acceleration is given)
-        if abs(self.player.velocity[0]) < 10:
+        if abs(self.player.velocity[0]) < 30:
             self.player.velocity[0] = 0
-        if abs(self.player.velocity[1]) < 10:
+        if abs(self.player.velocity[1]) < 30:
             self.player.velocity[1] = 0
 
         # Update acceleration
@@ -105,6 +116,20 @@ class Game:
         if speed > 0.1:
             self.player.acceleration[0] -= self.player.velocity[0] / speed * k
             self.player.acceleration[1] -= self.player.velocity[1] / speed * k
+
+        # Update crosshair position
+        beta = 30
+        self.player.crosshair[0] += 30 * (self.key_pressed[pygame.K_d] - self.key_pressed[pygame.K_a])
+        self.player.crosshair[1] += 30 * (self.key_pressed[pygame.K_s] - self.key_pressed[pygame.K_w])
+
+        if self.player.crosshair[0] < 0:
+            self.player.crosshair[0] = 0
+        if self.player.crosshair[0] > self.screen_width:
+            self.player.crosshair[0] = self.screen_width
+        if self.player.crosshair[1] < 0:
+            self.player.crosshair[1] = 0
+        if self.player.crosshair[1] > self.screen_height:
+            self.player.crosshair[1] = self.screen_height
 
         # Check collisions
         r = self.player.get_rect()
