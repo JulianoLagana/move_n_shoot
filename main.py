@@ -74,8 +74,8 @@ class Game:
     def update_physics(self):
 
         delta_t = 1/60
-        alpha = 3000
-        k = 1500
+        alpha = 7000
+        k = 3000
 
         # Update position (CA model)
         self.player.position[0] += self.player.velocity[0] * delta_t + self.player.acceleration[0] * (delta_t ** 2) / 2
@@ -92,8 +92,14 @@ class Game:
             self.player.velocity[1] = 0
 
         # Update acceleration
-        self.player.acceleration[0] = alpha * (self.key_pressed[pygame.K_RIGHT] - self.key_pressed[pygame.K_LEFT])
-        self.player.acceleration[1] = alpha * (self.key_pressed[pygame.K_DOWN] - self.key_pressed[pygame.K_UP])
+        thrust = [self.key_pressed[pygame.K_RIGHT] - self.key_pressed[pygame.K_LEFT],
+                  self.key_pressed[pygame.K_DOWN] - self.key_pressed[pygame.K_UP]]
+        thrust_mag = (thrust[0]**2 + thrust[1]**2)**0.5
+        if thrust_mag > 0:
+            self.player.acceleration[0] = alpha * thrust[0]/thrust_mag
+            self.player.acceleration[1] = alpha * thrust[1]/thrust_mag
+        else:
+            self.player.acceleration = [0, 0]
 
         speed = (self.player.velocity[0]**2 + self.player.velocity[1]**2)**0.5
         if speed > 0.1:
