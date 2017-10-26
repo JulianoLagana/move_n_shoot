@@ -6,7 +6,7 @@ pygame.init()
 class Player:
     def __init__(self, position=None, sz=None, img_filename='player.bmp'):
 
-        self.MAX_SPEED = 40
+        self.MAX_SPEED = 2000
 
         # Default value for position
         if position is None:
@@ -37,7 +37,51 @@ class Player:
         r.center = (self.position[0], self.position[1])
         return r
 
-    # Draws the player to the screen
+    # Updates the state of the player, depending on which action was taken in this time step
+    def update(self, key_pressed, delta_t):
+        alpha = 20000
+        k = 3000
+
+        # Update position (CA model)
+        self.position[0] += self.velocity[0] * delta_t + self.acceleration[0] * (delta_t ** 2) / 2
+        self.position[1] += self.velocity[1] * delta_t + self.acceleration[1] * (delta_t ** 2) / 2
+
+        # Update velocity (CA model)
+        self.velocity[0] += self.acceleration[0] * delta_t
+        self.velocity[1] += self.acceleration[1] * delta_t
+
+        # Update acceleration
+        thrust = [key_pressed[pygame.K_RIGHT] - key_pressed[pygame.K_LEFT],
+                  key_pressed[pygame.K_DOWN] - key_pressed[pygame.K_UP]]
+        thrust_mag = (thrust[0] ** 2 + thrust[1] ** 2) ** 0.5
+        if thrust_mag > 0:
+            self.acceleration[0] = alpha * thrust[0] / thrust_mag
+            self.acceleration[1] = alpha * thrust[1] / thrust_mag
+        else:
+            self.acceleration = [0, 0]
+
+        # Limit maximum speed
+        speed = (self.velocity[0] ** 2 + self.velocity[1] ** 2) ** 0.5
+        if speed > self.MAX_SPEED:
+            limiting_factor = self.MAX_SPEED/speed
+            self.velocity[0] *= limiting_factor
+            self.velocity[1] *= limiting_factor
+
+        # Threshold the velocities to zero (this makes the player stop eventually, if no acceleration is given)
+        if speed < 30:
+            self.velocity = [0, 0]
+
+        # Add friction-like component
+        if speed > 0.1:
+            self.acceleration[0] -= self.velocity[0] / speed * k
+            self.acceleration[1] -= self.velocity[1] / speed * k
+
+        # Update crosshair position
+        beta = 30
+        self.crosshair[0] += beta * (key_pressed[pygame.K_d] - key_pressed[pygame.K_a])
+        self.crosshair[1] += beta * (key_pressed[pygame.K_s] - key_pressed[pygame.K_w])
+
+    # Draws the player and its crosshair to the screen
     def draw(self, scr):
         scr.blit(self.img, self.get_rect())
 
@@ -47,6 +91,7 @@ class Player:
 
 
 class Game:
+
     def __init__(self, width=1600, height=800):
 
         # Create screen for the game
@@ -85,43 +130,10 @@ class Game:
     def update_physics(self):
 
         delta_t = 1/60
-        alpha = 7000
-        k = 3000
 
-        # Update position (CA model)
-        self.player.position[0] += self.player.velocity[0] * delta_t + self.player.acceleration[0] * (delta_t ** 2) / 2
-        self.player.position[1] += self.player.velocity[1] * delta_t + self.player.acceleration[1] * (delta_t ** 2) / 2
+        self.player.update(self.key_pressed, delta_t)
 
-        # Update velocity (CA model)
-        self.player.velocity[0] += self.player.acceleration[0] * delta_t
-        self.player.velocity[1] += self.player.acceleration[1] * delta_t
-
-        # Threshold the velocities (this makes the player stop eventually, if no acceleration is given)
-        if abs(self.player.velocity[0]) < 30:
-            self.player.velocity[0] = 0
-        if abs(self.player.velocity[1]) < 30:
-            self.player.velocity[1] = 0
-
-        # Update acceleration
-        thrust = [self.key_pressed[pygame.K_RIGHT] - self.key_pressed[pygame.K_LEFT],
-                  self.key_pressed[pygame.K_DOWN] - self.key_pressed[pygame.K_UP]]
-        thrust_mag = (thrust[0]**2 + thrust[1]**2)**0.5
-        if thrust_mag > 0:
-            self.player.acceleration[0] = alpha * thrust[0]/thrust_mag
-            self.player.acceleration[1] = alpha * thrust[1]/thrust_mag
-        else:
-            self.player.acceleration = [0, 0]
-
-        speed = (self.player.velocity[0]**2 + self.player.velocity[1]**2)**0.5
-        if speed > 0.1:
-            self.player.acceleration[0] -= self.player.velocity[0] / speed * k
-            self.player.acceleration[1] -= self.player.velocity[1] / speed * k
-
-        # Update crosshair position
-        beta = 30
-        self.player.crosshair[0] += 30 * (self.key_pressed[pygame.K_d] - self.key_pressed[pygame.K_a])
-        self.player.crosshair[1] += 30 * (self.key_pressed[pygame.K_s] - self.key_pressed[pygame.K_w])
-
+        # Limit crosshair position
         if self.player.crosshair[0] < 0:
             self.player.crosshair[0] = 0
         if self.player.crosshair[0] > self.screen_width:
