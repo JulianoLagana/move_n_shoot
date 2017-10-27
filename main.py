@@ -110,7 +110,12 @@ class Game:
             self.key_pressed[key] = False
 
         # Load player
-        self.player = Player([37.5, 37.5])
+        self.players = []
+
+    def add_player(self, position=None):
+        if position is None:
+            position = [0, 0]
+        self.players.append(Player(position))
 
     def handle_events(self):
 
@@ -134,51 +139,56 @@ class Game:
 
         delta_t = 1/60
 
-        # Decide actions for player
-        action_names = ['up', 'down', 'left', 'right', 'ch_up', 'ch_down', 'ch_left', 'ch_right']
-        key_bindings = [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT,
-                        pygame.K_w, pygame.K_s, pygame.K_a, pygame.K_d]
-        actions = {}
-        for action_name, key_binding in zip(action_names, key_bindings):
-            actions[action_name] = self.key_pressed[key_binding]
-        actions['move_ch'] = pygame.mouse.get_pos()
+        for player in self.players:
 
-        # Update player using chosen actions
-        self.player.update(actions, delta_t)
+            # Decide actions for player
+            action_names = ['up', 'down', 'left', 'right', 'ch_up', 'ch_down', 'ch_left', 'ch_right']
+            key_bindings = [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT,
+                            pygame.K_w, pygame.K_s, pygame.K_a, pygame.K_d]
+            actions = {}
+            for action_name, key_binding in zip(action_names, key_bindings):
+                actions[action_name] = self.key_pressed[key_binding]
+            actions['move_ch'] = pygame.mouse.get_pos()
 
-        # Limit crosshair position
-        if self.player.crosshair[0] < 0:
-            self.player.crosshair[0] = 0
-        if self.player.crosshair[0] > self.screen_width:
-            self.player.crosshair[0] = self.screen_width
-        if self.player.crosshair[1] < 0:
-            self.player.crosshair[1] = 0
-        if self.player.crosshair[1] > self.screen_height:
-            self.player.crosshair[1] = self.screen_height
+            # Update player using chosen actions
+            player.update(actions, delta_t)
 
-        # Check collisions
-        r = self.player.get_rect()
-        if r.left < 0:
-            self.player.position[0] = r.width / 2
-            self.player.velocity[0] = -self.player.velocity[0]*0.8
-        if r.top < 0:
-            self.player.position[1] = r.height / 2
-            self.player.velocity[1] = -self.player.velocity[1]*0.8
-        if r.right > self.screen_width:
-            self.player.position[0] = self.screen_width - r.width / 2
-            self.player.velocity[0] = -self.player.velocity[0]*0.8
-        if r.bottom > self.screen_height:
-            self.player.position[1] = self.screen_height - r.height / 2
-            self.player.velocity[1] = -self.player.velocity[1]*0.8
+            # Limit crosshair position
+            if player.crosshair[0] < 0:
+                player.crosshair[0] = 0
+            if player.crosshair[0] > self.screen_width:
+                player.crosshair[0] = self.screen_width
+            if player.crosshair[1] < 0:
+                player.crosshair[1] = 0
+            if player.crosshair[1] > self.screen_height:
+                player.crosshair[1] = self.screen_height
+
+            # Check collisions with walls
+            r = player.get_rect()
+            if r.left < 0:
+                player.position[0] = r.width / 2
+                player.velocity[0] = -player.velocity[0]*0.8
+            if r.top < 0:
+                player.position[1] = r.height / 2
+                player.velocity[1] = -player.velocity[1]*0.8
+            if r.right > self.screen_width:
+                player.position[0] = self.screen_width - r.width / 2
+                player.velocity[0] = -player.velocity[0]*0.8
+            if r.bottom > self.screen_height:
+                player.position[1] = self.screen_height - r.height / 2
+                player.velocity[1] = -player.velocity[1]*0.8
 
     def draw_frame(self):
         self.screen.fill((0, 0, 0))
-        self.player.draw(self.screen)
+        for player in self.players:
+            player.draw(self.screen)
         pygame.display.flip()
         self.clock.tick(60)
 
 
 myGame = Game()
+myGame.add_player([37.5, 37.5])
+myGame.add_player([500, 500])
 
 while 1:
     myGame.handle_events()
