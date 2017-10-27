@@ -37,8 +37,8 @@ class Player:
         r.center = (self.position[0], self.position[1])
         return r
 
-    # Updates the state of the player, depending on which action was taken in this time step
-    def update(self, key_pressed, delta_t):
+    # Updates the state of the player, depending on which action(s) was(were) taken in this time step
+    def update(self, actions, delta_t):
         alpha = 20000
         k = 3000
 
@@ -51,8 +51,8 @@ class Player:
         self.velocity[1] += self.acceleration[1] * delta_t
 
         # Update acceleration
-        thrust = [key_pressed[pygame.K_RIGHT] - key_pressed[pygame.K_LEFT],
-                  key_pressed[pygame.K_DOWN] - key_pressed[pygame.K_UP]]
+        thrust = [actions['right'] - actions['left'],
+                  actions['down'] - actions['up']]
         thrust_mag = (thrust[0] ** 2 + thrust[1] ** 2) ** 0.5
         if thrust_mag > 0:
             self.acceleration[0] = alpha * thrust[0] / thrust_mag
@@ -77,9 +77,12 @@ class Player:
             self.acceleration[1] -= self.velocity[1] / speed * k
 
         # Update crosshair position
-        beta = 30
-        self.crosshair[0] += beta * (key_pressed[pygame.K_d] - key_pressed[pygame.K_a])
-        self.crosshair[1] += beta * (key_pressed[pygame.K_s] - key_pressed[pygame.K_w])
+        if actions['move_ch']:
+            self.crosshair = actions['move_ch']
+        else:
+            beta = 30
+            self.crosshair[0] += beta * (actions['ch_right'] - actions['ch_left'])
+            self.crosshair[1] += beta * (actions['ch_down'] - actions['ch_up'])
 
     # Draws the player and its crosshair to the screen
     def draw(self, scr):
@@ -131,7 +134,17 @@ class Game:
 
         delta_t = 1/60
 
-        self.player.update(self.key_pressed, delta_t)
+        # Decide actions for player
+        action_names = ['up', 'down', 'left', 'right', 'ch_up', 'ch_down', 'ch_left', 'ch_right']
+        key_bindings = [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT,
+                        pygame.K_w, pygame.K_s, pygame.K_a, pygame.K_d]
+        actions = {}
+        for action_name, key_binding in zip(action_names, key_bindings):
+            actions[action_name] = self.key_pressed[key_binding]
+        actions['move_ch'] = pygame.mouse.get_pos()
+
+        # Update player using chosen actions
+        self.player.update(actions, delta_t)
 
         # Limit crosshair position
         if self.player.crosshair[0] < 0:
