@@ -112,10 +112,11 @@ class Game:
         # Load player
         self.players = []
 
-    def add_player(self, position=None):
+    def add_player(self, decide_action_fun, position=None):
         if position is None:
             position = [0, 0]
         self.players.append(Player(position))
+        self.players[-1].decide_action = decide_action_fun
 
     def handle_events(self):
 
@@ -135,6 +136,17 @@ class Game:
                 if event.key in self.key_pressed:
                     self.key_pressed[event.key] = False
 
+    def create_human_player_binding(self):
+        def fun(self):
+            action_names = ['up', 'down', 'left', 'right']
+            key_bindings = [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT]
+            actions = {}
+            for action_name, key_binding in zip(action_names, key_bindings):
+                actions[action_name] = self.key_pressed[key_binding]
+            actions['move_ch'] = pygame.mouse.get_pos()
+            return actions
+        return fun
+
     def update_physics(self):
 
         delta_t = 1/60
@@ -142,13 +154,7 @@ class Game:
         for player in self.players:
 
             # Decide actions for player
-            action_names = ['up', 'down', 'left', 'right', 'ch_up', 'ch_down', 'ch_left', 'ch_right']
-            key_bindings = [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT,
-                            pygame.K_w, pygame.K_s, pygame.K_a, pygame.K_d]
-            actions = {}
-            for action_name, key_binding in zip(action_names, key_bindings):
-                actions[action_name] = self.key_pressed[key_binding]
-            actions['move_ch'] = pygame.mouse.get_pos()
+            actions = player.decide_action(self)
 
             # Update player using chosen actions
             player.update(actions, delta_t)
@@ -187,8 +193,7 @@ class Game:
 
 
 myGame = Game()
-myGame.add_player([37.5, 37.5])
-myGame.add_player([500, 500])
+myGame.add_player(myGame.create_human_player_binding(), [37.5, 37.5])
 
 while 1:
     myGame.handle_events()
