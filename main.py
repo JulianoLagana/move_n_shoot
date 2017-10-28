@@ -4,7 +4,30 @@ pygame.init()
 
 
 class Player:
+    """
+    Class for representing players in the game.
+
+    Attributes:
+        - position: Position of the player. Array with two elements.
+        - velocity: Velocity of the player. Array with two elements.
+        - acceleration: Acceleration of the player. Array with two elements.
+        - MAX_SPEED: Maximum speed for the player. Constant.
+        - img: Image of the player, used to draw it. Surface.
+        - crosshair: Position of the player's crosshair. Array with two elements.
+        - crosshair_img: Image of the player's crosshair. Surface.
+    """
+
     def __init__(self, position=None, sz=None, img_filename='player.bmp'):
+        """
+        Initialize a player instance.
+
+        :param position: Initial 2D position for the player. Default value [0,0]
+        :type position: List with two elements
+        :param sz: New size of the player's image after resizing. Default value None (no resizing)
+        :type sz: Tuple with two elements
+        :param img_filename: Filename for the player's image
+        :type img_filename: string
+        """
 
         self.MAX_SPEED = 2000
 
@@ -31,14 +54,26 @@ class Player:
         self.crosshair_img = pygame.transform.scale(temp, (70, 70))
         self.crosshair_img.set_colorkey((0, 0, 0))
 
-    # Returns rectangle around the player image
     def get_rect(self):
+        """
+        Return a newly-created Rect object, with it's `center` attribute at the same position as the player.
+
+        :return: Rectangle object, centered at the player
+        :rtype: Rect
+        """
+
         r = self.img.get_rect()
         r.center = (self.position[0], self.position[1])
         return r
 
-    # Updates the state of the player, depending on which action(s) was(were) taken in this time step
     def update(self, actions, delta_t):
+        """
+        Update the state of the player, depending on which actions were taken in this time step.
+
+        :param actions: List of actions that the player chose to take in this time step
+        :param delta_t: How much time passed since the last update
+        """
+
         alpha = 20000
         k = 3000
 
@@ -84,8 +119,13 @@ class Player:
             self.crosshair[0] += beta * (actions['ch_right'] - actions['ch_left'])
             self.crosshair[1] += beta * (actions['ch_down'] - actions['ch_up'])
 
-    # Draws the player and its crosshair to the screen
     def draw(self, scr):
+        """
+        Draw the player and it's crosshair in the Surface object provided as argument.
+
+        :param scr: Where the player and it's crosshair will be drawn
+        :type scr: Surface
+        """
         scr.blit(self.img, self.get_rect())
 
         r_crosshair = self.crosshair_img.get_rect()
