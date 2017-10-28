@@ -1,4 +1,5 @@
-import sys, pygame
+import sys
+import pygame
 
 pygame.init()
 
@@ -85,8 +86,23 @@ class Player:
         """
         Update the state of the player, depending on which actions were taken in this time step.
 
-        :param actions: List of actions that the player chose to take in this time step
+        The `actions` parameter is a dictionary containing the following keys:
+            - 'up': Accelerates the player upwards (True or False).
+            - 'down': Accelerates the player downwards (True or False).
+            - 'left': Accelerates the player to the left (True or False).
+            - 'right': Accelerates the player to the right (True or False).
+            - 'ch_up': Moves the player's crosshair up (True or False).
+            - 'ch_down': Moves the player's crosshair down (True or False).
+            - 'ch_left': Moves the player's crosshair left (True or False).
+            - 'ch_right': Moves the player's crosshair right (True or False).
+            - 'ch_move': Exact position where to move the player's crosshair (2D tuple or False).
+        A key with value False means that the corresponding action will not be executed. If 'ch_move' is not False,
+        all the other 'ch_*' actions are ignored.
+
+        :param actions: Dictionary of actions that the player chose to take in this time step
+        :type actions: Dictionary with keys of the type string
         :param delta_t: How much time passed since the last update
+        :type delta_t: float
         """
 
         alpha = 20000
