@@ -7,6 +7,8 @@ class Player:
     """
     Class for representing players in the game.
 
+    Before creating an instance of this class, the video mode has to be set (e.g. by creating a Game instance).
+
     Attributes:
         - position: Position of the player. Array with two elements.
         - velocity: Velocity of the player. Array with two elements.
@@ -15,9 +17,11 @@ class Player:
         - img: Image of the player, used to draw it. Surface.
         - crosshair: Position of the player's crosshair. Array with two elements.
         - crosshair_img: Image of the player's crosshair. Surface.
+        - decide_action: Function to decide the player's action, given a Game instance. Function that takes a game
+        instance as argument, and returns a list of actions to be taken.
     """
 
-    def __init__(self, position=None, sz=None, img_filename='player.bmp'):
+    def __init__(self, position=None, sz=None, img_filename='player.bmp', decide_action_fun=None):
         """
         Initialize a player instance.
 
@@ -27,6 +31,8 @@ class Player:
         :type sz: Tuple with two elements
         :param img_filename: Filename for the player's image
         :type img_filename: string
+        :param decide_action_fun: Function that the will be called to decide the player's actions at each time step
+        :type decide_action_fun: Function that takes one argument, a Game instance, and returns a list of actions
         """
 
         self.MAX_SPEED = 2000
@@ -54,9 +60,18 @@ class Player:
         self.crosshair_img = pygame.transform.scale(temp, (70, 70))
         self.crosshair_img.set_colorkey((0, 0, 0))
 
+        # Determine how the player will decide it's actions
+        if decide_action_fun is None:
+            def no_action(game_instance):
+                return []
+            decide_action_fun = no_action
+        self.decide_action = decide_action_fun
+
     def get_rect(self):
         """
         Return a newly-created Rect object, with it's `center` attribute at the same position as the player.
+
+        Note: Changing this returned Rect has no effect on the Player instance.
 
         :return: Rectangle object, centered at the player
         :rtype: Rect
@@ -155,8 +170,7 @@ class Game:
     def add_player(self, decide_action_fun, position=None):
         if position is None:
             position = [0, 0]
-        self.players.append(Player(position))
-        self.players[-1].decide_action = decide_action_fun
+        self.players.append(Player(position, decide_action_fun=decide_action_fun))
 
     def handle_events(self):
 
@@ -239,4 +253,3 @@ while 1:
     myGame.handle_events()
     myGame.update_physics()
     myGame.draw_frame()
-
