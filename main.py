@@ -34,9 +34,9 @@ class Player:
         :param img_filename: Filename for the player's image. Default value is 'player.bmp'.
         :type img_filename: string
         :param decide_action_fun: Function that the will be called to decide the player's actions at each time step.
-        Default value is a function that always returns no actions.
+            Default value is a function that always returns no actions.
         :type decide_action_fun: Function that takes one argument, a Game instance, and returns a list of actions to be
-        interpreted by the update() method.
+            interpreted by the update() method.
         """
 
         self.MAX_SPEED = 2000
@@ -101,6 +101,9 @@ class Player:
             - 'ch_move': Exact position where to move the player's crosshair (2D tuple or False).
         A key with value False means that the corresponding action will not be executed. If 'ch_move' is not False,
         all the other 'ch_*' actions are ignored.
+
+        Player's move according to a simple discretized CA model. The action taken at time step 'i' influences directly
+        the acceleration at time step 'i+1'.
 
         :param actions: Dictionary of actions that the player chose to take in this time step
         :type actions: Dictionary with keys of the type string
@@ -174,7 +177,7 @@ class Game:
         Initializes a game instance.
 
         :param screen_sz: Tuple that represents the width and height of the screen that will be created. Default value
-        is (1600,800).
+            is (1600,800).
         :type screen_sz: Tuple with two elements.
         """
         if screen_sz is None:
@@ -199,8 +202,8 @@ class Game:
         Adds a new player to the game.
 
         :param decide_action_fun: Function that the player will use to decide its actions
-        :type decide_action_fun: Function that takes a Game instance as argument, and outputs a list of actions to be
-        interpreted by the players update() method.
+        :type decide_action_fun: Function that takes a Game instance as argument, and outputs a list of actions, to be
+            interpreted by the players update() method.
         :param position: Initial position for the player being added to the game. Default value is [0,0].
         :type position: Array with two elements.
         """
@@ -209,7 +212,9 @@ class Game:
         self.players.append(Player(position, decide_action_fun=decide_action_fun))
 
     def handle_events(self):
-
+        """
+        Handles all events from the game (quitting, updating key presses, etc).
+        """
         for event in pygame.event.get():
 
             # Handle closing event
@@ -227,7 +232,19 @@ class Game:
                     self.key_pressed[event.key] = False
 
     def create_human_player_binding(self):
-        def fun(self):
+        """
+        Used to create key-presses bindings to a player.
+
+        THe player's movement is bound to the keys up, down, left and right. Also always moves the player's crosshair
+        to the current mouse position.
+
+        :return: Function that binds key presses and mouse movement to the player's actions. To be passed to the Player
+            constructor class as the 'decide_action_fun' argument.
+        :rtype: Function that takes a Game instance as argument, and returns a list of actions to be taken at each time
+            step.
+        """
+
+        def fun(game_instance):
             action_names = ['up', 'down', 'left', 'right']
             key_bindings = [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT]
             actions = {}
@@ -238,9 +255,20 @@ class Game:
         return fun
 
     def update_physics(self):
+        """
+        Updates the game's current state, using all the player's actions and the game's physics.
 
+        Every player will have the decide_action() method called to determine its actions, and then the update() method
+        to perform these.
+
+        Physics:
+            - Crosshair position is limited to the screen.
+            - Player's position is limited to the screen.
+            - Partially elastic collision between players and the borders of the screen.
+        """
         delta_t = 1/60
 
+        # For each player
         for player in self.players:
 
             # Decide actions for player
@@ -275,6 +303,9 @@ class Game:
                 player.velocity[1] = -player.velocity[1]*0.8
 
     def draw_frame(self):
+        """
+        Draws the current game state to the screen. Limited to max 60 fps.
+        """
         self.screen.fill((0, 0, 0))
         for player in self.players:
             player.draw(self.screen)
