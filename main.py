@@ -169,12 +169,20 @@ class Player:
 
 class Game:
 
-    def __init__(self, width=1600, height=800):
+    def __init__(self, screen_sz=None):
+        """
+        Initializes a game instance.
 
-        # Create screen for the game
-        self.screen_width = width
-        self.screen_height = height
-        self.screen = pygame.display.set_mode((width, height))
+        :param screen_sz: Tuple that represents the width and height of the screen that will be created. Default value
+        is (1600,800).
+        :type screen_sz: Tuple with two elements.
+        """
+        if screen_sz is None:
+            screen_sz = (1600, 800)
+
+        self.screen_width = screen_sz[0]
+        self.screen_height = screen_sz[1]
+        self.screen = pygame.display.set_mode(screen_sz)
         self.clock = pygame.time.Clock()
 
         # Initialize dictionary for key presses
@@ -183,10 +191,19 @@ class Game:
                     pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d]:
             self.key_pressed[key] = False
 
-        # Load player
+        # Initialize player's array
         self.players = []
 
     def add_player(self, decide_action_fun, position=None):
+        """
+        Adds a new player to the game.
+
+        :param decide_action_fun: Function that the player will use to decide its actions
+        :type decide_action_fun: Function that takes a Game instance as argument, and outputs a list of actions to be
+        interpreted by the players update() method.
+        :param position: Initial position for the player being added to the game. Default value is [0,0].
+        :type position: Array with two elements.
+        """
         if position is None:
             position = [0, 0]
         self.players.append(Player(position, decide_action_fun=decide_action_fun))
