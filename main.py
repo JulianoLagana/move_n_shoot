@@ -171,6 +171,19 @@ class Player:
 
 
 class Game:
+    """
+    Class for representing the move n' shoot game.
+
+    Attributes:
+        - screen_width: Width of the screen used to draw the game. Number.
+        - screen_height: Width of the screen used to draw the game. Number.
+        - screen: The screen of the game, where it will be drawn. Surface object.
+        - clock: Clock to hold the game's time information. Clock object.
+        - key_pressed: Dictionary with one key for each recognized keyboard key the user can press. The values are
+            either True or False, depending on whether that key was being pressed or not when the handle_events()
+            method was last called.
+        - players: Holds all the players present in the game. Array of Player objects.
+    """
 
     def __init__(self, screen_sz=None):
         """
