@@ -19,21 +19,24 @@ class Player:
         - crosshair: Position of the player's crosshair. Array with two elements.
         - crosshair_img: Image of the player's crosshair. Surface.
         - decide_action: Function to decide the player's action, given a Game instance. Function that takes a game
-        instance as argument, and returns a list of actions to be taken.
+        instance as argument, and returns a list of actions to be taken, which will be interpreted by the update()
+        method of this class.
     """
 
     def __init__(self, position=None, sz=None, img_filename='player.bmp', decide_action_fun=None):
         """
         Initialize a player instance.
 
-        :param position: Initial 2D position for the player. Default value [0,0]
-        :type position: List with two elements
-        :param sz: New size of the player's image after resizing. Default value None (no resizing)
-        :type sz: Tuple with two elements
-        :param img_filename: Filename for the player's image
+        :param position: Initial 2D position for the player. Default value is [0,0].
+        :type position: List with two elements.
+        :param sz: New size of the player's image after resizing. Default value None (no resizing).
+        :type sz: Tuple with two elements.
+        :param img_filename: Filename for the player's image. Default value is 'player.bmp'.
         :type img_filename: string
-        :param decide_action_fun: Function that the will be called to decide the player's actions at each time step
-        :type decide_action_fun: Function that takes one argument, a Game instance, and returns a list of actions
+        :param decide_action_fun: Function that the will be called to decide the player's actions at each time step.
+        Default value is a function that always returns no actions.
+        :type decide_action_fun: Function that takes one argument, a Game instance, and returns a list of actions to be
+        interpreted by the update() method.
         """
 
         self.MAX_SPEED = 2000
@@ -74,8 +77,8 @@ class Player:
 
         Note: Changing this returned Rect has no effect on the Player instance.
 
-        :return: Rectangle object, centered at the player
-        :rtype: Rect
+        :return: Rectangle object, centered at the player.
+        :rtype: Rect.
         """
 
         r = self.img.get_rect()
@@ -154,8 +157,8 @@ class Player:
         """
         Draw the player and it's crosshair in the Surface object provided as argument.
 
-        :param scr: Where the player and it's crosshair will be drawn
-        :type scr: Surface
+        :param scr: Where the player and it's crosshair will be drawn.
+        :type scr: Surface.
         """
         scr.blit(self.img, self.get_rect())
 
