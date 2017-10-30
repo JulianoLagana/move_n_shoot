@@ -4,6 +4,35 @@ import pygame
 pygame.init()
 
 
+class Bullet:
+
+    def __init__(self):
+        self.position = [-100, -100]
+        self.velocity = [0, 0]
+        temp = pygame.image.load('bullet.bmp')
+        self.img = pygame.transform.scale(temp, (20, 20))
+        self.was_shot = False
+
+    def reset_bullet(self):
+        self.position = [-100, 100]
+        self.velocity = [0, 0]
+        self.was_shot = False
+
+    def update(self, delta_t):
+        if self.was_shot:
+            self.position[0] += self.velocity[0] * delta_t
+            self.position[1] += self.velocity[1] * delta_t
+
+    def draw(self, scr):
+        r = self.get_rect()
+        scr.blit(self.img, r)
+
+    def get_rect(self):
+        r = self.img.get_rect()
+        r.center = self.position
+        return r
+
+
 class Player:
     """
     Class for representing players in the game.
@@ -11,15 +40,17 @@ class Player:
     Before creating an instance of this class, the video mode has to be set (e.g. by creating a Game instance).
 
     Attributes:
+        - MAX_SPEED: Maximum speed for the player. Constant number.
+        - SHOOTING_SPEED: Speed of the player's bullets when shot. Constant number.
+        - img: Image of the player, used to draw it. Surface.
         - position: Position of the player. Array with two elements.
         - velocity: Velocity of the player. Array with two elements.
         - acceleration: Acceleration of the player. Array with two elements.
-        - MAX_SPEED: Maximum speed for the player. Constant.
-        - img: Image of the player, used to draw it. Surface.
         - crosshair: Position of the player's crosshair. Array with two elements.
         - crosshair_img: Image of the player's crosshair. Surface.
+        - bullet: The bullet of the player. Bullet object.
         - decide_action: Function to decide the player's action, given a Game instance. Function that takes a game
-        instance as argument, and returns a list of actions to be taken, which will be interpreted by the update()
+        instance as argument, and returns a list of actions to be taken which will be interpreted by the update()
         method of this class.
     """
 
@@ -40,6 +71,7 @@ class Player:
         """
 
         self.MAX_SPEED = 2000
+        self.SHOOTING_SPEED = 3000
 
         # Default value for position
         if position is None:
@@ -63,6 +95,9 @@ class Player:
         temp = pygame.image.load('crosshair.bmp').convert()
         self.crosshair_img = pygame.transform.scale(temp, (70, 70))
         self.crosshair_img.set_colorkey((0, 0, 0))
+
+        # Bullet position initialization
+        self.bullet = Bullet()
 
         # Determine how the player will decide it's actions
         if decide_action_fun is None:
@@ -99,6 +134,7 @@ class Player:
             - 'ch_left': Moves the player's crosshair left (True or False).
             - 'ch_right': Moves the player's crosshair right (True or False).
             - 'ch_move': Exact position where to move the player's crosshair (2D tuple or False).
+            - 'shoot': Tries shooting the player's bullet (True or False).
         A key with value False means that the corresponding action will not be executed. If 'ch_move' is not False,
         all the other 'ch_*' actions are ignored.
 
@@ -156,18 +192,42 @@ class Player:
             self.crosshair[0] += beta * (actions['ch_right'] - actions['ch_left'])
             self.crosshair[1] += beta * (actions['ch_down'] - actions['ch_up'])
 
+        # Shoot, if player chose this action
+        if actions['shoot'] and not self.bullet.was_shot:
+
+            # Compute bullet's velocity direction
+            bullet_vel = [self.crosshair[0]-self.position[0], self.crosshair[1]-self.position[1]]
+
+            # Adjust bullet's velocity magnitude
+            bullet_speed = (bullet_vel[0] ** 2 + bullet_vel[1] ** 2) ** 0.5
+            bullet_vel[0] *= self.SHOOTING_SPEED / bullet_speed
+            bullet_vel[1] *= self.SHOOTING_SPEED / bullet_speed
+
+            # Set the bullet's attributes
+            self.bullet.position = self.position[:]
+            self.bullet.velocity = bullet_vel
+            self.bullet.was_shot = True
+
+        self.bullet.update(delta_t)
+
     def draw(self, scr):
         """
-        Draw the player and it's crosshair in the Surface object provided as argument.
+        Draw the player, its crosshair, and its bullet in the Surface object provided as argument.
 
         :param scr: Where the player and it's crosshair will be drawn.
         :type scr: Surface.
         """
+
+        # Draw the player
         scr.blit(self.img, self.get_rect())
 
+        # Draw its crosshair
         r_crosshair = self.crosshair_img.get_rect()
         r_crosshair.center = self.crosshair
         scr.blit(self.crosshair_img, r_crosshair)
+
+        # Draw its bullet
+        self.bullet.draw(scr)
 
 
 class Game:
@@ -204,7 +264,7 @@ class Game:
         # Initialize dictionary for key presses
         self.key_pressed = {}
         for key in [pygame.K_LEFT, pygame.K_RIGHT, pygame.K_DOWN, pygame.K_UP,
-                    pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d]:
+                    pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d, pygame.K_SPACE]:
             self.key_pressed[key] = False
 
         # Initialize player's array
@@ -248,8 +308,8 @@ class Game:
         """
         Used to create key-presses bindings to a player.
 
-        THe player's movement is bound to the keys up, down, left and right. Also always moves the player's crosshair
-        to the current mouse position.
+        The player's movement is bound to the keys up, down, left and right. Shooting is bound to the space key. Also,
+        always moves the player's crosshair to the current mouse position.
 
         :return: Function that binds key presses and mouse movement to the player's actions. To be passed to the Player
             constructor class as the 'decide_action_fun' argument.
@@ -258,11 +318,12 @@ class Game:
         """
 
         def fun(game_instance):
-            action_names = ['up', 'down', 'left', 'right']
-            key_bindings = [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT]
+            action_names = ['up', 'down', 'left', 'right', 'shoot']
+            key_bindings = [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT, pygame.K_SPACE]
             actions = {}
             for action_name, key_binding in zip(action_names, key_bindings):
                 actions[action_name] = self.key_pressed[key_binding]
+
             actions['move_ch'] = pygame.mouse.get_pos()
             return actions
         return fun
@@ -314,6 +375,11 @@ class Game:
             if r.bottom > self.screen_height:
                 player.position[1] = self.screen_height - r.height / 2
                 player.velocity[1] = -player.velocity[1]*0.8
+
+            # Check bullet collision with walls
+            r = player.bullet.get_rect()
+            if r.left < 0 or r.top < 0 or r.right > self.screen_width or r.bottom > self.screen_height:
+                player.bullet.reset_bullet()
 
     def draw_frame(self):
         """
