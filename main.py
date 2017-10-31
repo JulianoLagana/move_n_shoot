@@ -135,7 +135,7 @@ class Player:
             - 'ch_right': Moves the player's crosshair right (True or False).
             - 'ch_mouse': Aligns the player's crosshair with the mouse (True or False).
             - 'shoot': Tries shooting the player's bullet (True or False).
-        A key with value False means that the corresponding action will not be executed. If 'ch_move' is not False,
+        A key with value False means that the corresponding action will not be executed. If 'ch_mouse' is not False,
         all the other 'ch_*' actions are ignored.
 
         Player's move according to a simple discretized CA model. The action taken at time step 'i' influences directly
