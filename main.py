@@ -229,7 +229,7 @@ class Player:
         # Draw its bullet
         self.bullet.draw(scr)
 
-
+import numpy as np
 class Game:
     """
     Class for representing the move n' shoot game.
@@ -310,30 +310,6 @@ class Game:
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 self.key_pressed['mouse_click'] = False
 
-    @staticmethod
-    def create_human_player_binding():
-        """
-        Used to create key-presses bindings to a player.
-
-        The player's movement is bound to the keys up, down, left and right. Shooting is bound to the space key. Also,
-        always moves the player's crosshair to the current mouse position.
-
-        :return: Function that binds key presses and mouse movement to the player's actions. To be passed to the Player
-            constructor class as the 'decide_action_fun' argument.
-        :rtype: Function that takes a Game instance as argument, and returns a list of actions to be taken at each time
-            step.
-        """
-        def fun(game_instance):
-            action_names = ['up', 'down', 'left', 'right', 'shoot']
-            key_bindings = [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT, 'mouse_click']
-            actions = {}
-            for action_name, key_binding in zip(action_names, key_bindings):
-                actions[action_name] = game_instance.key_pressed[key_binding]
-
-            actions['ch_mouse'] = True
-            return actions
-        return fun
-
     def update_physics(self):
         """
         Updates the game's current state, using all the player's actions and the game's physics.
@@ -397,9 +373,67 @@ class Game:
         pygame.display.flip()
         self.clock.tick(60)
 
+    @staticmethod
+    def create_human_player_binding():
+        """
+        Used to create key-presses bindings to a player.
+
+        The player's movement is bound to the keys up, down, left and right. Shooting is bound to the space key. Also,
+        always moves the player's crosshair to the current mouse position.
+
+        :return: Function that binds key presses and mouse movement to the player's actions. To be passed to the Player
+            constructor class as the 'decide_action_fun' argument.
+        :rtype: Function that takes a Game instance as argument, and returns a list of actions to be taken at each time
+            step.
+        """
+        def fun(game_instance):
+            action_names = ['up', 'down', 'left', 'right', 'shoot']
+            key_bindings = [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT, 'mouse_click']
+            actions = {}
+            for action_name, key_binding in zip(action_names, key_bindings):
+                actions[action_name] = game_instance.key_pressed[key_binding]
+
+            actions['ch_mouse'] = True
+            return actions
+        return fun
+
+    @staticmethod
+    def create_random_player_binding(prob_action=0.05):
+
+        def fun(game_instance):
+            action_names = ['up', 'down', 'left', 'right', 'shoot', 'ch_up', 'ch_down', 'ch_left', 'ch_right']
+
+            # Initialize old actions
+            if not hasattr(fun, 'old_actions'):
+                fun.old_actions = {}
+                for action in action_names:
+                    fun.old_actions[action] = False
+
+            # For each action
+            actions = {}
+            for action in action_names:
+
+                # With probability 'prob_action', do the opposite of what was done in the last call of this function
+                r = np.random.rand()
+                if r < prob_action:
+                    actions[action] = not fun.old_actions[action]
+                else:
+                    actions[action] = fun.old_actions[action]
+
+            # Don't use the mouse
+            actions['ch_mouse'] = False
+
+            # Update the old actions
+            fun.old_actions = actions.copy()
+
+            return actions
+
+        return fun
+
 
 myGame = Game()
 myGame.add_player(Game.create_human_player_binding(), [37.5, 37.5])
+myGame.add_player(Game.create_random_player_binding(), [myGame.screen_width, myGame.screen_height])
 
 while 1:
     myGame.handle_events()
