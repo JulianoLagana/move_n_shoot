@@ -384,7 +384,7 @@ class Game:
 
             # Check bullet collision with walls
             r = player.bullet.get_rect()
-            if r.left < 0 or r.top < 0 or r.right > self.screen_width or r.bottom > self.screen_height:
+            if r.right < 0 or r.bottom < 0 or r.left > self.screen_width or r.top > self.screen_height:
                 player.bullet.reset_bullet()
 
     def draw_frame(self):
