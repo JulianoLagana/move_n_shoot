@@ -81,6 +81,8 @@ class Player:
             Default value is a function that always returns no actions.
         :type decide_action_fun: Function that takes one argument, a Game instance, and returns a list of actions to be
             interpreted by the update() method.
+        :param player_color: RGB color for the player. Default value is [255, 255, 255]
+        :type player_color: Array with three values.
         """
 
         self.MAX_SPEED = 2000
@@ -310,6 +312,8 @@ class Game:
             interpreted by the players update() method.
         :param position: Initial position for the player being added to the game. Default value is [0,0].
         :type position: Array with two elements.
+        :param player_color: RGB color of the player being added. Default value is [255, 255, 255]
+        :type player_color: Array with three elements.
         """
 
         self.players.append(Player(position, decide_action_fun=decide_action_fun, player_color=player_color))
@@ -461,9 +465,11 @@ class Game:
         return fun
 
 
+teal_color = [0, 188, 212]
+yellowish_color = [255, 235, 59]
 myGame = Game()
-myGame.add_player(Game.create_human_player_binding(), [37.5, 37.5], [0, 188, 212])
-myGame.add_player(Game.create_random_player_binding(), [myGame.screen_width, myGame.screen_height], [255, 235, 59])
+myGame.add_player(Game.create_human_player_binding(), [37.5, 37.5], teal_color)
+myGame.add_player(Game.create_random_player_binding(), [myGame.screen_width, myGame.screen_height], yellowish_color)
 
 while 1:
     myGame.handle_events()
