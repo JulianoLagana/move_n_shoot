@@ -310,7 +310,8 @@ class Game:
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 self.key_pressed['mouse_click'] = False
 
-    def create_human_player_binding(self):
+    @staticmethod
+    def create_human_player_binding():
         """
         Used to create key-presses bindings to a player.
 
@@ -322,7 +323,6 @@ class Game:
         :rtype: Function that takes a Game instance as argument, and returns a list of actions to be taken at each time
             step.
         """
-
         def fun(game_instance):
             action_names = ['up', 'down', 'left', 'right', 'shoot']
             key_bindings = [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT, 'mouse_click']
@@ -399,7 +399,7 @@ class Game:
 
 
 myGame = Game()
-myGame.add_player(myGame.create_human_player_binding(), [37.5, 37.5])
+myGame.add_player(Game.create_human_player_binding(), [37.5, 37.5])
 
 while 1:
     myGame.handle_events()
