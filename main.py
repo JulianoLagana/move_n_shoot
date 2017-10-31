@@ -264,7 +264,7 @@ class Game:
         # Initialize dictionary for key presses
         self.key_pressed = {}
         for key in [pygame.K_LEFT, pygame.K_RIGHT, pygame.K_DOWN, pygame.K_UP,
-                    pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d, pygame.K_SPACE]:
+                    pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d, pygame.K_SPACE, 'mouse_click']:
             self.key_pressed[key] = False
 
         # Initialize player's array
@@ -286,7 +286,7 @@ class Game:
 
     def handle_events(self):
         """
-        Handles all events from the game (quitting, updating key presses, etc).
+        Handles all events from the game (quitting, updating key presses, mouse clicks, etc).
         """
         for event in pygame.event.get():
 
@@ -304,6 +304,12 @@ class Game:
                 if event.key in self.key_pressed:
                     self.key_pressed[event.key] = False
 
+            # Handle mouse clicks
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                self.key_pressed['mouse_click'] = True
+            if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                self.key_pressed['mouse_click'] = False
+
     def create_human_player_binding(self):
         """
         Used to create key-presses bindings to a player.
@@ -319,10 +325,10 @@ class Game:
 
         def fun(game_instance):
             action_names = ['up', 'down', 'left', 'right', 'shoot']
-            key_bindings = [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT, pygame.K_SPACE]
+            key_bindings = [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT, 'mouse_click']
             actions = {}
             for action_name, key_binding in zip(action_names, key_bindings):
-                actions[action_name] = self.key_pressed[key_binding]
+                actions[action_name] = game_instance.key_pressed[key_binding]
 
             actions['move_ch'] = pygame.mouse.get_pos()
             return actions
