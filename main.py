@@ -85,7 +85,7 @@ class Player:
         :type player_color: Array with three values.
         """
 
-        self.MAX_SPEED = 2000
+        self.MAX_SPEED = 1500
         self.SHOOTING_SPEED = 3000
 
         # Default value for position
