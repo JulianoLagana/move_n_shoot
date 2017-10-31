@@ -6,11 +6,23 @@ pygame.init()
 
 class Bullet:
 
-    def __init__(self):
+    def __init__(self, color=None):
+        if color is None:
+            color = [255, 255, 255]
+
         self.position = [-100, -100]
         self.velocity = [0, 0]
+
+        # Load the image and resize it
         temp = pygame.image.load('bullet.bmp')
         self.img = pygame.transform.scale(temp, (20, 20))
+
+        # Color the image
+        arr = pygame.surfarray.pixels3d(self.img)
+        arr[:, :, 0] = color[0]
+        arr[:, :, 1] = color[1]
+        arr[:, :, 2] = color[2]
+
         self.was_shot = False
 
     def reset_bullet(self):
@@ -54,7 +66,8 @@ class Player:
         method of this class.
     """
 
-    def __init__(self, position=None, sz=None, img_filename='player.bmp', decide_action_fun=None):
+    def __init__(self, position=None, sz=None, img_filename='player.bmp', decide_action_fun=None,
+                 player_color=None):
         """
         Initialize a player instance.
 
@@ -75,11 +88,14 @@ class Player:
 
         # Default value for position
         if position is None:
-            self.position = [0, 0]
-        else:
-            self.position = position
+            position = [0, 0]
+
+        # Default value for color of the player
+        if player_color is None:
+            player_color = [255, 255, 255]
 
         # Velocity and acceleration initializations
+        self.position = position
         self.velocity = [0, 0]
         self.acceleration = [0, 0]
 
@@ -90,14 +106,29 @@ class Player:
         else:
             self.img = pygame.transform.scale(temp, sz)
 
+        # Color the player image
+        arr = pygame.surfarray.pixels3d(self.img)
+        arr[:, :, 0] = player_color[0]
+        arr[:, :, 1] = player_color[1]
+        arr[:, :, 2] = player_color[2]
+
         # Crosshair initialization
         self.crosshair = [200, 200]
         temp = pygame.image.load('crosshair.bmp').convert()
         self.crosshair_img = pygame.transform.scale(temp, (70, 70))
         self.crosshair_img.set_colorkey((0, 0, 0))
 
+        # Color the crosshair image
+        arr = pygame.surfarray.pixels3d(self.crosshair_img)
+        arr_r = arr[:, :, 0]
+        arr_g = arr[:, :, 1]
+        arr_b = arr[:, :, 2]
+        arr_r[arr_r == 255] = player_color[0]
+        arr_g[arr_g == 255] = player_color[1]
+        arr_b[arr_b == 255] = player_color[2]
+
         # Bullet position initialization
-        self.bullet = Bullet()
+        self.bullet = Bullet(player_color)
 
         # Determine how the player will decide it's actions
         if decide_action_fun is None:
@@ -270,7 +301,7 @@ class Game:
         # Initialize player's array
         self.players = []
 
-    def add_player(self, decide_action_fun, position=None):
+    def add_player(self, decide_action_fun, position=None, player_color=None):
         """
         Adds a new player to the game.
 
@@ -280,9 +311,8 @@ class Game:
         :param position: Initial position for the player being added to the game. Default value is [0,0].
         :type position: Array with two elements.
         """
-        if position is None:
-            position = [0, 0]
-        self.players.append(Player(position, decide_action_fun=decide_action_fun))
+
+        self.players.append(Player(position, decide_action_fun=decide_action_fun, player_color=player_color))
 
     def handle_events(self):
         """
@@ -432,8 +462,8 @@ class Game:
 
 
 myGame = Game()
-myGame.add_player(Game.create_human_player_binding(), [37.5, 37.5])
-myGame.add_player(Game.create_random_player_binding(), [myGame.screen_width, myGame.screen_height])
+myGame.add_player(Game.create_human_player_binding(), [37.5, 37.5], [0, 188, 212])
+myGame.add_player(Game.create_random_player_binding(), [myGame.screen_width, myGame.screen_height], [255, 235, 59])
 
 while 1:
     myGame.handle_events()
