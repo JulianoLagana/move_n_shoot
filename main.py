@@ -133,7 +133,7 @@ class Player:
             - 'ch_down': Moves the player's crosshair down (True or False).
             - 'ch_left': Moves the player's crosshair left (True or False).
             - 'ch_right': Moves the player's crosshair right (True or False).
-            - 'ch_move': Exact position where to move the player's crosshair (2D tuple or False).
+            - 'ch_mouse': Aligns the player's crosshair with the mouse (True or False).
             - 'shoot': Tries shooting the player's bullet (True or False).
         A key with value False means that the corresponding action will not be executed. If 'ch_move' is not False,
         all the other 'ch_*' actions are ignored.
@@ -185,8 +185,8 @@ class Player:
             self.acceleration[1] -= self.velocity[1] / speed * k
 
         # Update crosshair position
-        if actions['move_ch']:
-            self.crosshair = actions['move_ch']
+        if actions['ch_mouse']:
+            self.crosshair = pygame.mouse.get_pos()
         else:
             beta = 30
             self.crosshair[0] += beta * (actions['ch_right'] - actions['ch_left'])
@@ -261,7 +261,7 @@ class Game:
         self.screen = pygame.display.set_mode(screen_sz)
         self.clock = pygame.time.Clock()
 
-        # Initialize dictionary for key presses
+        # Initialize dictionary for key presses and mouse clicks
         self.key_pressed = {}
         for key in [pygame.K_LEFT, pygame.K_RIGHT, pygame.K_DOWN, pygame.K_UP,
                     pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d, pygame.K_SPACE, 'mouse_click']:
@@ -330,7 +330,7 @@ class Game:
             for action_name, key_binding in zip(action_names, key_bindings):
                 actions[action_name] = game_instance.key_pressed[key_binding]
 
-            actions['move_ch'] = pygame.mouse.get_pos()
+            actions['ch_mouse'] = True
             return actions
         return fun
 
