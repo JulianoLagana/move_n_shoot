@@ -61,6 +61,7 @@ class Player:
         - crosshair: Position of the player's crosshair. Array with two elements.
         - crosshair_img: Image of the player's crosshair. Surface.
         - bullet: The bullet of the player. Bullet object.
+        - score: The player's score. Number.
         - decide_action: Function to decide the player's action, given a Game instance. Function that takes a game
         instance as argument, and returns a list of actions to be taken which will be interpreted by the update()
         method of this class.
