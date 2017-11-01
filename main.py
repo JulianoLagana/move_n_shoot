@@ -132,10 +132,16 @@ class Player:
         # Bullet position initialization
         self.bullet = Bullet(player_color)
 
-        # Determine how the player will decide it's actions
+        # If no function for deciding actions is provided, specify one that always decides to not act
         if decide_action_fun is None:
             def no_action(game_instance):
-                return []
+                del game_instance # unused argument
+                action_names = ['up', 'down', 'left', 'right', 'shoot',
+                                'ch_up', 'ch_down', 'ch_left', 'ch_right', 'ch_mouse']
+                actions = {}
+                for action in action_names:
+                    actions[action] = False
+                return actions
             decide_action_fun = no_action
         self.decide_action = decide_action_fun
 
@@ -304,7 +310,7 @@ class Game:
         # Initialize player's array
         self.players = []
 
-    def add_player(self, decide_action_fun, position=None, player_color=None):
+    def add_player(self, decide_action_fun=None, position=None, player_color=None):
         """
         Adds a new player to the game. Maximum 2 players in the game.
 
@@ -319,7 +325,6 @@ class Game:
 
         if len(self.players) < 2:
             self.players.append(Player(position, decide_action_fun=decide_action_fun, player_color=player_color))
-
 
     def handle_events(self):
         """
@@ -472,7 +477,7 @@ teal_color = [0, 188, 212]
 yellowish_color = [255, 235, 59]
 myGame = Game()
 myGame.add_player(Game.create_human_player_binding(), [37.5, 37.5], teal_color)
-myGame.add_player(Game.create_random_player_binding(), [myGame.screen_width, myGame.screen_height], yellowish_color)
+myGame.add_player(None, [myGame.screen_width, myGame.screen_height], yellowish_color)
 
 while 1:
     myGame.handle_events()
