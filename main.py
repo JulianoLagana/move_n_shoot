@@ -80,8 +80,9 @@ class Player:
         :type img_filename: string
         :param decide_action_fun: Function that the will be called to decide the player's actions at each time step.
             Default value is a function that always returns no actions.
-        :type decide_action_fun: Function that takes one argument, a Game instance, and returns a list of actions to be
-            interpreted by the update() method.
+        :type decide_action_fun: Function that takes two arguments, the player's index in the Game instance, and the
+            Game instance to which the player belongs to. Returns a list of actions to be interpreted by the
+            update() method of that Game instance.
         :param player_color: RGB color for the player. Default value is [255, 255, 255]
         :type player_color: Array with three values.
         """
@@ -135,7 +136,8 @@ class Player:
 
         # If no function for deciding actions is provided, specify one that always decides to not act
         if decide_action_fun is None:
-            def no_action(game_instance):
+            def no_action(player_index, game_instance):
+                del player_index # unused argument
                 del game_instance # unused argument
                 action_names = ['up', 'down', 'left', 'right', 'shoot',
                                 'ch_up', 'ch_down', 'ch_left', 'ch_right', 'ch_mouse']
@@ -380,7 +382,7 @@ class Game:
         for i, player in enumerate(self.players):
 
             # Decide actions for player
-            actions = player.decide_action(self)
+            actions = player.decide_action(i, self)
 
             # Update player using chosen actions
             player.update(actions, delta_t)
@@ -525,7 +527,8 @@ class Game:
         :rtype: Function that takes a Game instance as argument, and returns a list of actions to be taken at each time
             step.
         """
-        def fun(game_instance):
+        def fun(player_index, game_instance):
+            del player_index  # unused argument
             action_names = ['up', 'down', 'left', 'right', 'shoot']
             key_bindings = [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT, 'mouse_click']
             actions = {}
@@ -539,7 +542,9 @@ class Game:
     @staticmethod
     def create_random_player_binding(prob_action=0.05):
 
-        def fun(game_instance):
+        def fun(player_index, game_instance):
+            del player_index  # unused argument
+            del game_instance  # unused argument
             action_names = ['up', 'down', 'left', 'right', 'shoot', 'ch_up', 'ch_down', 'ch_left', 'ch_right']
 
             # Initialize old actions
@@ -572,7 +577,7 @@ class Game:
     @staticmethod
     def create_simple_ai_binding(prob_action=0.05):
 
-        def fun(game_instance):
+        def fun(player_index, game_instance):
             action_names = ['up', 'down', 'left', 'right', 'shoot']
 
             # Initialize old actions
@@ -596,10 +601,11 @@ class Game:
             actions['ch_mouse'] = False
 
             # Make crosshair follow opponent
-            actions['ch_left'] = game_instance.players[0].position[0] < game_instance.players[1].crosshair[0]
-            actions['ch_right'] = game_instance.players[0].position[0] > game_instance.players[1].crosshair[0]
-            actions['ch_up'] = game_instance.players[0].position[1] < game_instance.players[1].crosshair[1]
-            actions['ch_down'] = game_instance.players[0].position[1] > game_instance.players[1].crosshair[1]
+            i = player_index  # shorthand
+            actions['ch_left'] = game_instance.players[1-i].position[0] < game_instance.players[i].crosshair[0]
+            actions['ch_right'] = game_instance.players[1-i].position[0] > game_instance.players[i].crosshair[0]
+            actions['ch_up'] = game_instance.players[1-i].position[1] < game_instance.players[i].crosshair[1]
+            actions['ch_down'] = game_instance.players[1-i].position[1] > game_instance.players[i].crosshair[1]
 
             # Update the old actions
             fun.old_actions = actions.copy()
@@ -613,8 +619,9 @@ yellowish_color = [255, 235, 59]
 max_score = 10
 
 myGame = Game()
-myGame.add_player(Game.create_human_player_binding(), [100, 100], teal_color)
 myGame.add_player(Game.create_simple_ai_binding(), [myGame.screen_width, myGame.screen_height], yellowish_color)
+myGame.add_player(Game.create_human_player_binding(), [100, 100], teal_color)
+
 
 while (myGame.players[0].score < max_score) and (myGame.players[1].score < max_score):
     myGame.handle_events()
