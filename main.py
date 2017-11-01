@@ -568,6 +568,44 @@ class Game:
 
         return fun
 
+    @staticmethod
+    def create_simple_ai_binding(prob_action=0.05):
+
+        def fun(game_instance):
+            action_names = ['up', 'down', 'left', 'right', 'shoot']
+
+            # Initialize old actions
+            if not hasattr(fun, 'old_actions'):
+                fun.old_actions = {}
+                for action in action_names:
+                    fun.old_actions[action] = False
+
+            # For each action
+            actions = {}
+            for action in action_names:
+
+                # With probability 'prob_action', do the opposite of what was done in the last call of this function
+                r = np.random.rand()
+                if r < prob_action:
+                    actions[action] = not fun.old_actions[action]
+                else:
+                    actions[action] = fun.old_actions[action]
+
+            # Don't use the mouse
+            actions['ch_mouse'] = False
+
+            # Make crosshair follow opponent
+            actions['ch_left'] = game_instance.players[0].position[0] < game_instance.players[1].crosshair[0]
+            actions['ch_right'] = game_instance.players[0].position[0] > game_instance.players[1].crosshair[0]
+            actions['ch_up'] = game_instance.players[0].position[1] < game_instance.players[1].crosshair[1]
+            actions['ch_down'] = game_instance.players[0].position[1] > game_instance.players[1].crosshair[1]
+
+            # Update the old actions
+            fun.old_actions = actions.copy()
+
+            return actions
+
+        return fun
 
 teal_color = [0, 188, 212]
 yellowish_color = [255, 235, 59]
@@ -575,7 +613,7 @@ max_score = 10
 
 myGame = Game()
 myGame.add_player(Game.create_human_player_binding(), [100, 100], teal_color)
-myGame.add_player(Game.create_random_player_binding(), [myGame.screen_width, myGame.screen_height], yellowish_color)
+myGame.add_player(Game.create_simple_ai_binding(), [myGame.screen_width, myGame.screen_height], yellowish_color)
 
 while (myGame.players[0].score < max_score) and (myGame.players[1].score < max_score):
     myGame.handle_events()
