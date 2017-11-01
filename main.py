@@ -373,7 +373,8 @@ class Game:
             - Partially elastic collision between players and the borders of the screen.
             - Perfectly elastic collision between players.
         """
-        delta_t = 1/60
+        slowdown_factor = 2
+        delta_t = 1/(60*slowdown_factor)
 
         # For each player
         for i, player in enumerate(self.players):
