@@ -363,6 +363,7 @@ class Game:
             - Crosshair position is limited to the screen.
             - Player's position is limited to the screen.
             - Partially elastic collision between players and the borders of the screen.
+            - Perfectly elastic collision between players.
         """
         delta_t = 1/60
 
@@ -404,6 +405,77 @@ class Game:
             r = player.bullet.get_rect()
             if r.right < 0 or r.bottom < 0 or r.left > self.screen_width or r.top > self.screen_height:
                 player.bullet.reset_bullet()
+
+        # Parse collision between players (if there are two players in the game)
+        if len(self.players) == 2:
+            self.__parse_player_collision(self.players[0], self.players[1])
+
+    def __parse_player_collision(self, player1, player2):
+        """
+        Checks if player 1 and 2 are colliding. If they are, resolve the collision by updating their positions and
+        velocities using a perfectly elastic collision model. This is accomplished by using the players' current states
+        (in which their Rects intersect) to estimate the states exactly at the moment of collision (using a constant
+        velocity model).
+
+        Assumptions:
+            - Both players' Rects are squares.
+            - Both players' Rects have the same side length.
+            - Players velocity did not change since the last call of this function.
+            - Players have the same mass.
+            - The collision between players is perfectly elastic.
+
+        Note 1: The assumption about constant player velocity might be broken without many complications, if this
+        function is called frequently enough.
+        Note 2: estimation could (?) be better using the players' accelerations as well, but also more computationally
+        expensive. However, if this method is called frequently enough, this should not matter.
+
+        :param player1: The first player involved in the collision.
+        :type player1: Player.
+        :param player2: The second player involved in the collision.
+        :type player2: Player.
+        """
+
+        # Initializations
+        r1 = player1.get_rect()
+        r2 = player2.get_rect()
+        l = player1.get_rect().width
+
+        # If the collision happened, parse it
+        if r1.colliderect(r2):
+
+            is_collision_x = is_collision_y = False
+
+            # Use the players' position to determine the length of the intersection between them in x and y
+            delta_x = l - abs(player1.position[0] - player2.position[0])
+            delta_y = l - abs(player1.position[1] - player2.position[1])
+
+            # Use the players' velocities to determine how long ago would a collision have happened in each of the
+            # directions
+            v_x = abs(player1.velocity[0] - player2.velocity[0])
+            v_y = abs(player1.velocity[1] - player2.velocity[1])
+            delta_tx = delta_x / v_x if v_x > 0 else float('inf')
+            delta_ty = delta_y / v_y if v_y > 0 else float('inf')
+
+            # The collision likely happened in the direction with the smallest delta_t
+            if delta_tx < delta_ty:
+                is_collision_x = True
+            elif delta_ty < delta_tx:
+                is_collision_y = True
+            else:
+                is_collision_x = is_collision_y = True
+
+            # Change players' positions to where they were right before impact
+            delta_t = min(delta_tx, delta_ty)
+            player1.position[0] -= player1.velocity[0] * delta_t
+            player1.position[1] -= player1.velocity[1] * delta_t
+            player2.position[0] -= player2.velocity[0] * delta_t
+            player2.position[1] -= player2.velocity[1] * delta_t
+
+            # Change players' velocities depending on the direction of the collision
+            for i, collision in enumerate((is_collision_x, is_collision_y)):
+                if collision:
+                    # Switch players' velocities in this direction
+                    (player1.velocity[i], player2.velocity[i]) = (player2.velocity[i], player1.velocity[i])
 
     def draw_frame(self):
         """
@@ -477,7 +549,7 @@ teal_color = [0, 188, 212]
 yellowish_color = [255, 235, 59]
 myGame = Game()
 myGame.add_player(Game.create_human_player_binding(), [37.5, 37.5], teal_color)
-myGame.add_player(None, [myGame.screen_width, myGame.screen_height], yellowish_color)
+myGame.add_player(Game.create_random_player_binding(), [myGame.screen_width, myGame.screen_height], yellowish_color)
 
 while 1:
     myGame.handle_events()
