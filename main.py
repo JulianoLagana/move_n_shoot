@@ -145,6 +145,9 @@ class Player:
             decide_action_fun = no_action
         self.decide_action = decide_action_fun
 
+        # Points initialization
+        self.score = 0
+
     def get_rect(self):
         """
         Return a newly-created Rect object, with it's `center` attribute at the same position as the player.
@@ -285,7 +288,7 @@ class Game:
         - players: Holds all the players present in the game. Array of Player objects.
     """
 
-    def __init__(self, screen_sz=None):
+    def __init__(self, screen_sz=None, max_score=1):
         """
         Initializes a game instance.
 
@@ -368,7 +371,7 @@ class Game:
         delta_t = 1/60
 
         # For each player
-        for player in self.players:
+        for i, player in enumerate(self.players):
 
             # Decide actions for player
             actions = player.decide_action(self)
@@ -404,6 +407,11 @@ class Game:
             # Check bullet collision with walls
             r = player.bullet.get_rect()
             if r.right < 0 or r.bottom < 0 or r.left > self.screen_width or r.top > self.screen_height:
+                player.bullet.reset_bullet()
+
+            # Check bullet collision with the other player
+            if r.colliderect(self.players[1-i].get_rect()):
+                player.score += 1
                 player.bullet.reset_bullet()
 
         # Parse collision between players (if there are two players in the game)
@@ -547,11 +555,19 @@ class Game:
 
 teal_color = [0, 188, 212]
 yellowish_color = [255, 235, 59]
+max_score = 10
+
 myGame = Game()
 myGame.add_player(Game.create_human_player_binding(), [37.5, 37.5], teal_color)
 myGame.add_player(Game.create_random_player_binding(), [myGame.screen_width, myGame.screen_height], yellowish_color)
 
-while 1:
+while (myGame.players[0].score < max_score) and (myGame.players[1].score < max_score):
     myGame.handle_events()
     myGame.update_physics()
     myGame.draw_frame()
+
+print('Final score')
+print('Player 1:', myGame.players[0].score)
+print('Player 2:', myGame.players[1].score)
+
+
