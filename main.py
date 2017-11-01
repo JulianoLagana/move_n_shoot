@@ -288,7 +288,7 @@ class Game:
         - players: Holds all the players present in the game. Array of Player objects.
     """
 
-    def __init__(self, screen_sz=None, max_score=1):
+    def __init__(self, screen_sz=None):
         """
         Initializes a game instance.
 
@@ -312,6 +312,10 @@ class Game:
 
         # Initialize player's array
         self.players = []
+
+        # Initialize font used in the game
+        pygame.font.init()
+        self.my_font = pygame.font.SysFont('Monospace', 40)
 
     def add_player(self, decide_action_fun=None, position=None, player_color=None):
         """
@@ -489,9 +493,20 @@ class Game:
         """
         Draws the current game state to the screen. Limited to max 60 fps.
         """
+        # Black background
         self.screen.fill((0, 0, 0))
+
+        # Draw all players
         for player in self.players:
             player.draw(self.screen)
+
+        # Draw players' scores
+        score_player1 = self.my_font.render('P1: ' + str(self.players[0].score), False, (255, 255, 255))
+        score_player2 = self.my_font.render('P2: ' + str(self.players[1].score), False, (255, 255, 255))
+        self.screen.blit(score_player1, (0, 0))
+        self.screen.blit(score_player2, (0, 40))
+
+        # Flip the display and limit frame-rate
         pygame.display.flip()
         self.clock.tick(60)
 
@@ -558,7 +573,7 @@ yellowish_color = [255, 235, 59]
 max_score = 10
 
 myGame = Game()
-myGame.add_player(Game.create_human_player_binding(), [37.5, 37.5], teal_color)
+myGame.add_player(Game.create_human_player_binding(), [100, 100], teal_color)
 myGame.add_player(Game.create_random_player_binding(), [myGame.screen_width, myGame.screen_height], yellowish_color)
 
 while (myGame.players[0].score < max_score) and (myGame.players[1].score < max_score):
