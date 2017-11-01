@@ -262,6 +262,7 @@ class Player:
         # Draw its bullet
         self.bullet.draw(scr)
 
+
 import numpy as np
 class Game:
     """
@@ -305,7 +306,7 @@ class Game:
 
     def add_player(self, decide_action_fun, position=None, player_color=None):
         """
-        Adds a new player to the game.
+        Adds a new player to the game. Maximum 2 players in the game.
 
         :param decide_action_fun: Function that the player will use to decide its actions
         :type decide_action_fun: Function that takes a Game instance as argument, and outputs a list of actions, to be
@@ -316,7 +317,9 @@ class Game:
         :type player_color: Array with three elements.
         """
 
-        self.players.append(Player(position, decide_action_fun=decide_action_fun, player_color=player_color))
+        if len(self.players) < 2:
+            self.players.append(Player(position, decide_action_fun=decide_action_fun, player_color=player_color))
+
 
     def handle_events(self):
         """
