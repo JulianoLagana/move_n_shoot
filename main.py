@@ -614,14 +614,77 @@ class Game:
 
         return fun
 
+    @staticmethod
+    def create_not_so_simple_ai_binding(prob_action=0.05):
+
+        def fun(player_index, game_instance):
+            action_names = ['up', 'down', 'left', 'right', 'shoot']
+
+            # Initialize old actions
+            if not hasattr(fun, 'old_actions'):
+                fun.old_actions = {}
+                for action in action_names:
+                    fun.old_actions[action] = False
+
+            # For each action
+            actions = {}
+            for action in action_names:
+
+                # With probability 'prob_action', do the opposite of what was done in the last call of this function
+                r = np.random.rand()
+                if r < prob_action:
+                    actions[action] = not fun.old_actions[action]
+                else:
+                    actions[action] = fun.old_actions[action]
+
+            # Don't use the mouse
+            actions['ch_mouse'] = False
+
+            # Predict position of impact
+            i = player_index  # shorthand
+
+            x1 = [game_instance.players[i].position[0], game_instance.players[i].position[1]]
+            x2 = [game_instance.players[1-i].position[0], game_instance.players[1-i].position[1]]
+            v2 = [game_instance.players[1-i].velocity[0], game_instance.players[1-i].velocity[1]]
+            alphasq = 3000**2
+
+            gamma = 4*(Game.dot(v2,x2)-Game.dot(v2,x1))-4*(Game.abs2(v2)-alphasq)*\
+                                                        (Game.abs2(x1)+Game.abs2(x2)-2*Game.dot(x1,x2))
+            delta_t = (2*(Game.dot(v2,x1)-Game.dot(v2,x2)) - gamma**0.5) / (2*(Game.abs2(v2)-alphasq))
+            position_to_aim = [x2[0]+v2[0]*delta_t, x2[1]+v2[1]*delta_t]
+
+            # Move crosshair towards predicted position of impact
+            actions['ch_left'] = position_to_aim[0] < game_instance.players[i].crosshair[0]
+            actions['ch_right'] = position_to_aim[0] > game_instance.players[i].crosshair[0]
+            actions['ch_up'] = position_to_aim[1] < game_instance.players[i].crosshair[1]
+            actions['ch_down'] = position_to_aim[1] > game_instance.players[i].crosshair[1]
+
+            # Update the old actions
+            fun.old_actions = actions.copy()
+
+            return actions
+
+        return fun
+
+    @staticmethod
+    def dot(a,b):
+        sum = 0
+        for el1, el2 in zip(a,b):
+            sum += el1*el2
+        return sum
+
+    @staticmethod
+    def abs2(a):
+        return Game.dot(a,a)
+
 teal_color = [0, 188, 212]
 yellowish_color = [255, 235, 59]
-max_score = 10
+max_score = 100
 
 myGame = Game()
-myGame.add_player(Game.create_simple_ai_binding(), [myGame.screen_width, myGame.screen_height], yellowish_color)
 myGame.add_player(Game.create_human_player_binding(), [100, 100], teal_color)
-
+myGame.add_player(Game.create_not_so_simple_ai_binding(), [myGame.screen_width, myGame.screen_height],
+                  yellowish_color)
 
 while (myGame.players[0].score < max_score) and (myGame.players[1].score < max_score):
     myGame.handle_events()
