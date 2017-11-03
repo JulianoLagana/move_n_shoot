@@ -13,14 +13,8 @@ class Bullet:
         self.velocity = [0, 0]
 
         # Load the image and resize it
-        temp = pygame.image.load('bullet.bmp')
-        self.img = pygame.transform.scale(temp, (20, 20))
-
-        # Color the image
-        arr = pygame.surfarray.pixels3d(self.img)
-        arr[:, :, 0] = color[0]
-        arr[:, :, 1] = color[1]
-        arr[:, :, 2] = color[2]
+        self.img = pygame.Surface((20, 20))
+        self.img.fill(color)
 
         self.was_shot = False
 
@@ -66,17 +60,15 @@ class Player:
         method of this class.
     """
 
-    def __init__(self, position=None, sz=None, img_filename='player.bmp', decide_action_fun=None,
+    def __init__(self, position=None, sz=100, decide_action_fun=None,
                  player_color=None):
         """
         Initialize a player instance.
 
         :param position: Initial 2D position for the player. Default value is [0,0].
         :type position: List with two elements.
-        :param sz: New size of the player's image after resizing. Default value None (no resizing).
-        :type sz: Tuple with two elements.
-        :param img_filename: Filename for the player's image. Default value is 'player.bmp'.
-        :type img_filename: string
+        :param sz: Length of the side of the player's square. Default value is 100.
+        :type sz: Number.
         :param decide_action_fun: Function that the will be called to decide the player's actions at each time step.
             Default value is a function that always returns no actions.
         :type decide_action_fun: Function that takes two arguments, the player's index in the Game instance, and the
@@ -103,17 +95,8 @@ class Player:
         self.acceleration = [0, 0]
 
         # Load image and optionally resize it
-        temp = pygame.image.load(img_filename).convert()
-        if sz is None:
-            self.img = temp
-        else:
-            self.img = pygame.transform.scale(temp, sz)
-
-        # Color the player image
-        arr = pygame.surfarray.pixels3d(self.img)
-        arr[:, :, 0] = player_color[0]
-        arr[:, :, 1] = player_color[1]
-        arr[:, :, 2] = player_color[2]
+        self.img = pygame.Surface((sz, sz))
+        self.img.fill(player_color)
 
         # Crosshair initialization
         self.crosshair = [200, 200]
