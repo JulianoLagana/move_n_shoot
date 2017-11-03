@@ -648,9 +648,9 @@ class Game:
             v2 = [game_instance.players[1-i].velocity[0], game_instance.players[1-i].velocity[1]]
             alphasq = 3000**2
 
-            gamma = 4*(Game.dot(v2,x2)-Game.dot(v2,x1))-4*(Game.abs2(v2)-alphasq)*\
-                                                        (Game.abs2(x1)+Game.abs2(x2)-2*Game.dot(x1,x2))
-            delta_t = (2*(Game.dot(v2,x1)-Game.dot(v2,x2)) - gamma**0.5) / (2*(Game.abs2(v2)-alphasq))
+            gamma = 4*(Game.dot(v2, x2)-Game.dot(v2, x1))**2-4*(Game.abs2(v2)-alphasq) * \
+                                                        (Game.abs2(x1)+Game.abs2(x2)-2*Game.dot(x1, x2))
+            delta_t = (2*(Game.dot(v2, x1)-Game.dot(v2, x2)) - gamma**0.5) / (2*(Game.abs2(v2)-alphasq))
             position_to_aim = [x2[0]+v2[0]*delta_t, x2[1]+v2[1]*delta_t]
 
             # Move crosshair towards predicted position of impact
