@@ -495,165 +495,165 @@ class Game:
         pygame.display.flip()
         self.clock.tick(60)
 
-    @staticmethod
-    def create_human_player_binding():
-        """
-        Used to create key-presses bindings to a player.
 
-        The player's movement is bound to the keys up, down, left and right. Shooting is bound to the space key. Also,
-        always moves the player's crosshair to the current mouse position.
+def create_human_player_binding():
+    """
+    Used to create key-presses bindings to a player.
 
-        :return: Function that binds key presses and mouse movement to the player's actions. To be passed to the Player
-            constructor class as the 'decide_action_fun' argument.
-        :rtype: Function that takes a Game instance as argument, and returns a list of actions to be taken at each time
-            step.
-        """
-        def fun(player_index, game_instance):
-            del player_index  # unused argument
-            action_names = ['up', 'down', 'left', 'right', 'shoot']
-            key_bindings = [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT, 'mouse_click']
-            actions = {}
-            for action_name, key_binding in zip(action_names, key_bindings):
-                actions[action_name] = game_instance.key_pressed[key_binding]
+    The player's movement is bound to the keys up, down, left and right. Shooting is bound to the space key. Also,
+    always moves the player's crosshair to the current mouse position.
 
-            actions['ch_mouse'] = True
-            return actions
-        return fun
+    :return: Function that binds key presses and mouse movement to the player's actions. To be passed to the Player
+        constructor class as the 'decide_action_fun' argument.
+    :rtype: Function that takes a Game instance as argument, and returns a list of actions to be taken at each time
+        step.
+    """
+    def fun(player_index, game_instance):
+        del player_index  # unused argument
+        action_names = ['up', 'down', 'left', 'right', 'shoot']
+        key_bindings = [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT, 'mouse_click']
+        actions = {}
+        for action_name, key_binding in zip(action_names, key_bindings):
+            actions[action_name] = game_instance.key_pressed[key_binding]
 
-    @staticmethod
-    def create_random_player_binding(prob_action=0.05):
+        actions['ch_mouse'] = True
+        return actions
+    return fun
 
-        def fun(player_index, game_instance):
-            del player_index  # unused argument
-            del game_instance  # unused argument
-            action_names = ['up', 'down', 'left', 'right', 'shoot', 'ch_up', 'ch_down', 'ch_left', 'ch_right']
 
-            # Initialize old actions
-            if not hasattr(fun, 'old_actions'):
-                fun.old_actions = {}
-                for action in action_names:
-                    fun.old_actions[action] = False
+def create_random_player_binding(prob_action=0.05):
 
-            # For each action
-            actions = {}
+    def fun(player_index, game_instance):
+        del player_index  # unused argument
+        del game_instance  # unused argument
+        action_names = ['up', 'down', 'left', 'right', 'shoot', 'ch_up', 'ch_down', 'ch_left', 'ch_right']
+
+        # Initialize old actions
+        if not hasattr(fun, 'old_actions'):
+            fun.old_actions = {}
             for action in action_names:
+                fun.old_actions[action] = False
 
-                # With probability 'prob_action', do the opposite of what was done in the last call of this function
-                r = np.random.rand()
-                if r < prob_action:
-                    actions[action] = not fun.old_actions[action]
-                else:
-                    actions[action] = fun.old_actions[action]
+        # For each action
+        actions = {}
+        for action in action_names:
 
-            # Don't use the mouse
-            actions['ch_mouse'] = False
+            # With probability 'prob_action', do the opposite of what was done in the last call of this function
+            r = np.random.rand()
+            if r < prob_action:
+                actions[action] = not fun.old_actions[action]
+            else:
+                actions[action] = fun.old_actions[action]
 
-            # Update the old actions
-            fun.old_actions = actions.copy()
+        # Don't use the mouse
+        actions['ch_mouse'] = False
 
-            return actions
+        # Update the old actions
+        fun.old_actions = actions.copy()
 
-        return fun
+        return actions
 
-    @staticmethod
-    def create_simple_ai_binding(prob_action=0.05):
+    return fun
 
-        def fun(player_index, game_instance):
-            action_names = ['up', 'down', 'left', 'right', 'shoot']
 
-            # Initialize old actions
-            if not hasattr(fun, 'old_actions'):
-                fun.old_actions = {}
-                for action in action_names:
-                    fun.old_actions[action] = False
+def create_simple_ai_binding(prob_action=0.05):
 
-            # For each action
-            actions = {}
+    def fun(player_index, game_instance):
+        action_names = ['up', 'down', 'left', 'right', 'shoot']
+
+        # Initialize old actions
+        if not hasattr(fun, 'old_actions'):
+            fun.old_actions = {}
             for action in action_names:
+                fun.old_actions[action] = False
 
-                # With probability 'prob_action', do the opposite of what was done in the last call of this function
-                r = np.random.rand()
-                if r < prob_action:
-                    actions[action] = not fun.old_actions[action]
-                else:
-                    actions[action] = fun.old_actions[action]
+        # For each action
+        actions = {}
+        for action in action_names:
 
-            # Don't use the mouse
-            actions['ch_mouse'] = False
+            # With probability 'prob_action', do the opposite of what was done in the last call of this function
+            r = np.random.rand()
+            if r < prob_action:
+                actions[action] = not fun.old_actions[action]
+            else:
+                actions[action] = fun.old_actions[action]
 
-            # Make crosshair follow opponent
-            i = player_index  # shorthand
-            actions['ch_left'] = game_instance.players[1-i].position[0] < game_instance.players[i].crosshair[0]
-            actions['ch_right'] = game_instance.players[1-i].position[0] > game_instance.players[i].crosshair[0]
-            actions['ch_up'] = game_instance.players[1-i].position[1] < game_instance.players[i].crosshair[1]
-            actions['ch_down'] = game_instance.players[1-i].position[1] > game_instance.players[i].crosshair[1]
+        # Don't use the mouse
+        actions['ch_mouse'] = False
 
-            # Update the old actions
-            fun.old_actions = actions.copy()
+        # Make crosshair follow opponent
+        i = player_index  # shorthand
+        actions['ch_left'] = game_instance.players[1-i].position[0] < game_instance.players[i].crosshair[0]
+        actions['ch_right'] = game_instance.players[1-i].position[0] > game_instance.players[i].crosshair[0]
+        actions['ch_up'] = game_instance.players[1-i].position[1] < game_instance.players[i].crosshair[1]
+        actions['ch_down'] = game_instance.players[1-i].position[1] > game_instance.players[i].crosshair[1]
 
-            return actions
+        # Update the old actions
+        fun.old_actions = actions.copy()
 
-        return fun
+        return actions
 
-    @staticmethod
-    def create_not_so_simple_ai_binding(prob_action=0.05):
+    return fun
 
-        def fun(player_index, game_instance):
-            action_names = ['up', 'down', 'left', 'right', 'shoot']
 
-            # Initialize old actions
-            if not hasattr(fun, 'old_actions'):
-                fun.old_actions = {}
-                for action in action_names:
-                    fun.old_actions[action] = False
+def create_not_so_simple_ai_binding(prob_action=0.05):
 
-            # For each action
-            actions = {}
+    def fun(player_index, game_instance):
+        action_names = ['up', 'down', 'left', 'right', 'shoot']
+
+        # Initialize old actions
+        if not hasattr(fun, 'old_actions'):
+            fun.old_actions = {}
             for action in action_names:
+                fun.old_actions[action] = False
 
-                # With probability 'prob_action', do the opposite of what was done in the last call of this function
-                r = np.random.rand()
-                if r < prob_action:
-                    actions[action] = not fun.old_actions[action]
-                else:
-                    actions[action] = fun.old_actions[action]
+        # For each action
+        actions = {}
+        for action in action_names:
 
-            # Don't use the mouse
-            actions['ch_mouse'] = False
+            # With probability 'prob_action', do the opposite of what was done in the last call of this function
+            r = np.random.rand()
+            if r < prob_action:
+                actions[action] = not fun.old_actions[action]
+            else:
+                actions[action] = fun.old_actions[action]
 
-            # Predict position of impact
-            i = player_index  # shorthand
+        # Don't use the mouse
+        actions['ch_mouse'] = False
 
-            x1 = [game_instance.players[i].position[0], game_instance.players[i].position[1]]
-            x2 = [game_instance.players[1-i].position[0], game_instance.players[1-i].position[1]]
-            v2 = [game_instance.players[1-i].velocity[0], game_instance.players[1-i].velocity[1]]
-            alphasq = 3000**2
+        # Predict position of impact
+        i = player_index  # shorthand
+        x1 = [game_instance.players[i].position[0], game_instance.players[i].position[1]]
+        x2 = [game_instance.players[1-i].position[0], game_instance.players[1-i].position[1]]
+        v2 = [game_instance.players[1-i].velocity[0], game_instance.players[1-i].velocity[1]]
 
-            gamma = 4*(Game.dot(v2, x2)-Game.dot(v2, x1))**2-4*(Game.abs2(v2)-alphasq) * \
-                                                        (Game.abs2(x1)+Game.abs2(x2)-2*Game.dot(x1, x2))
-            delta_t = (2*(Game.dot(v2, x1)-Game.dot(v2, x2)) - gamma**0.5) / (2*(Game.abs2(v2)-alphasq))
-            position_to_aim = [x2[0]+v2[0]*delta_t, x2[1]+v2[1]*delta_t]
+        alphasq = 3000**2
 
-            # Move crosshair towards predicted position of impact
-            actions['ch_left'] = position_to_aim[0] < game_instance.players[i].crosshair[0]
-            actions['ch_right'] = position_to_aim[0] > game_instance.players[i].crosshair[0]
-            actions['ch_up'] = position_to_aim[1] < game_instance.players[i].crosshair[1]
-            actions['ch_down'] = position_to_aim[1] > game_instance.players[i].crosshair[1]
+        gamma = 4*(dot(v2, x2)-dot(v2, x1))**2-4*(abs2(v2)-alphasq) * \
+                                                    (abs2(x1)+abs2(x2)-2*dot(x1, x2))
+        delta_t = (2*(dot(v2, x1)-dot(v2, x2)) - gamma**0.5) / (2*(abs2(v2)-alphasq))
+        position_to_aim = [x2[0]+v2[0]*delta_t, x2[1]+v2[1]*delta_t]
 
-            # Update the old actions
-            fun.old_actions = actions.copy()
+        # Move crosshair towards predicted position of impact
+        actions['ch_left'] = position_to_aim[0] < game_instance.players[i].crosshair[0]
+        actions['ch_right'] = position_to_aim[0] > game_instance.players[i].crosshair[0]
+        actions['ch_up'] = position_to_aim[1] < game_instance.players[i].crosshair[1]
+        actions['ch_down'] = position_to_aim[1] > game_instance.players[i].crosshair[1]
 
-            return actions
+        # Update the old actions
+        fun.old_actions = actions.copy()
 
-        return fun
+        return actions
 
-    @staticmethod
-    def dot(a,b):
-        sum = 0
-        for el1, el2 in zip(a,b):
-            sum += el1*el2
-        return sum
+    return fun
 
-    @staticmethod
-    def abs2(a):
-        return Game.dot(a,a)
+
+def dot(a, b):
+    my_sum = 0
+    for el1, el2 in zip(a, b):
+        my_sum += el1*el2
+    return my_sum
+
+
+def abs2(a):
+    return dot(a,a)
