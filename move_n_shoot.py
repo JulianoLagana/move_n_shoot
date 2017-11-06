@@ -1,4 +1,5 @@
 import numpy as np
+import os
 import pygame
 pygame.init()
 
@@ -100,7 +101,10 @@ class Player:
 
         # Crosshair initialization
         self.crosshair = [200, 200]
-        temp = pygame.image.load('crosshair.bmp').convert()
+        cur_dir = os.path.dirname(__file__)
+        relative_filename = 'crosshair.bmp'
+        filename = os.path.join(cur_dir, relative_filename)
+        temp = pygame.image.load(filename).convert()
         self.crosshair_img = pygame.transform.scale(temp, (70, 70))
         self.crosshair_img.set_colorkey((0, 0, 0))
 
