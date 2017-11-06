@@ -20,7 +20,7 @@ class Bullet:
         self.was_shot = False
 
     def reset_bullet(self):
-        self.position = [-100, 100]
+        self.position = [-100, -100]
         self.velocity = [0, 0]
         self.was_shot = False
 
