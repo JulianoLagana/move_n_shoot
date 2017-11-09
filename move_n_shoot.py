@@ -87,7 +87,7 @@ class Player:
         self.velocity = [0, 0]
         self.acceleration = [0, 0]
 
-        # Load image and optionally resize it
+        # Create player image
         self.img = pygame.Surface((sz, sz))
         self.img.fill(player_color)
 
@@ -440,6 +440,13 @@ class Game:
             # directions
             v_x = abs(player1.velocity[0] - player2.velocity[0])
             v_y = abs(player1.velocity[1] - player2.velocity[1])
+
+            # If both players had zero velocity when the collision was being parsed, resolve by randomly separating them
+            if v_x == 0 and v_y == 0:
+                v_x = np.random.rand()
+                v_y = np.random.rand()
+
+            # Compute the time for each collision direction
             delta_tx = delta_x / v_x if v_x > 0 else float('inf')
             delta_ty = delta_y / v_y if v_y > 0 else float('inf')
 
@@ -501,7 +508,7 @@ class Game:
             player.acceleration = [0, 0]
 
             # Randomizes position and crosshair position
-            player.position = [np.random.randint(0,self.screen_width), np.random.randint(0,self.screen_height)]
+            player.position = [np.random.randint(0, self.screen_width), np.random.randint(0, self.screen_height)]
             player.crosshair = [np.random.randint(0, self.screen_width), np.random.randint(0, self.screen_height)]
 
 
