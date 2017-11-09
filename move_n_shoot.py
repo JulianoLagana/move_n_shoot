@@ -489,6 +489,12 @@ class Game:
         pygame.display.flip()
         self.clock.tick(60)
 
+    @staticmethod
+    def get_names_possible_actions():
+
+        return ['up', 'down', 'left', 'right',
+                'shoot', 'ch_up', 'ch_down', 'ch_left', 'ch_right', 'ch_mouse']
+
 
 def get_human_player_action(game_instance):
     """
