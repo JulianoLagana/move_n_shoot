@@ -20,7 +20,7 @@ class Bullet:
         self.was_shot = False
 
     def reset_bullet(self):
-        self.position = [-100, 100]
+        self.position = [-100, -100]
         self.velocity = [0, 0]
         self.was_shot = False
 
@@ -57,8 +57,7 @@ class Player:
         - bullet: The bullet of the player. Bullet object.
         - score: The player's score. Number.
     """
-
-    def __init__(self, position=None, sz=100, player_color=None):
+    def __init__(self, position=None, sz=100, player_color=None, video_mode=True):
         """
         Initialize a player instance.
 
@@ -68,6 +67,8 @@ class Player:
         :type sz: Number.
         :param player_color: RGB color for the player. Default value is [255, 255, 255]
         :type player_color: Array with three values.
+        :param video_mode: Whether or not this player is in a game with graphical display. Default value is True.
+        :type video_mode: Boolean.
         """
 
         self.MAX_SPEED = 1500
@@ -95,7 +96,10 @@ class Player:
         cur_dir = os.path.dirname(__file__)
         relative_filename = 'crosshair.bmp'
         filename = os.path.join(cur_dir, relative_filename)
-        temp = pygame.image.load(filename).convert()
+        if video_mode:
+            temp = pygame.image.load(filename).convert()
+        else:
+            temp = pygame.image.load(filename)
         self.crosshair_img = pygame.transform.scale(temp, (70, 70))
         self.crosshair_img.set_colorkey((0, 0, 0))
 
@@ -253,21 +257,34 @@ class Game:
         - players: Holds all the players present in the game. Array of Player objects.
     """
 
-    def __init__(self, screen_sz=None):
+    def __init__(self, screen_sz=None, video_mode=True):
         """
         Initializes a game instance.
 
         :param screen_sz: Tuple that represents the width and height of the screen that will be created. Default value
             is (1600,800).
         :type screen_sz: Tuple with two elements.
+        :param video_mode: Whether or not to run the game's graphical display. Default value is True.
+        :type video_mode: Boolean.
         """
         if screen_sz is None:
             screen_sz = (1600, 800)
 
         self.screen_width = screen_sz[0]
         self.screen_height = screen_sz[1]
-        self.screen = pygame.display.set_mode(screen_sz)
-        self.clock = pygame.time.Clock()
+
+        self.video_mode = video_mode
+        if video_mode:
+
+            # Initialize the screen used to display the game's graphics
+            self.screen = pygame.display.set_mode(screen_sz)
+
+            # Initialize the clock used to limit frame-rate
+            self.clock = pygame.time.Clock()
+
+            # Initialize font used in the game
+            pygame.font.init()
+            self.my_font = pygame.font.SysFont('Monospace', 40)
 
         # Initialize dictionary for key presses and mouse clicks
         self.key_pressed = {}
@@ -277,10 +294,6 @@ class Game:
 
         # Initialize player's array
         self.players = []
-
-        # Initialize font used in the game
-        pygame.font.init()
-        self.my_font = pygame.font.SysFont('Monospace', 40)
 
     def add_player(self, position=None, player_color=None):
         """
@@ -293,7 +306,7 @@ class Game:
         """
 
         if len(self.players) < 2:
-            self.players.append(Player(position, player_color=player_color))
+            self.players.append(Player(position, player_color=player_color, video_mode=self.video_mode))
 
     def handle_events(self):
         """
@@ -455,6 +468,10 @@ class Game:
         """
         Draws the current game state to the screen. Limited to max 60 fps.
         """
+        # If video_mode is False, do nothing
+        if not self.video_mode:
+            return
+
         # Black background
         self.screen.fill((0, 0, 0))
 
