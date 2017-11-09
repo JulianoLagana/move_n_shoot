@@ -494,14 +494,16 @@ class Game:
         # For all players
         for player in self.players:
 
-            # Reset score and bullet
+            # Reset score, bullet, velocity and acceleration
             player.score = 0
             player.bullet.reset_bullet()
-
-            # Randomizes position. Reset velocity and acceleration
-            player.position = [np.random.randint(0,self.screen_width), np.random.randint(0,self.screen_height)]
             player.velocity = [0, 0]
             player.acceleration = [0, 0]
+
+            # Randomizes position and crosshair position
+            player.position = [np.random.randint(0,self.screen_width), np.random.randint(0,self.screen_height)]
+            player.crosshair = [np.random.randint(0, self.screen_width), np.random.randint(0, self.screen_height)]
+
 
     @staticmethod
     def get_names_possible_actions():
