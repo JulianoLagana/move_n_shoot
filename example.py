@@ -8,7 +8,7 @@ yellowish_color = [255, 235, 59]
 max_score = 100
 
 # Initializations
-myGame = Game()
+myGame = Game(video_mode=True)
 myGame.add_player([100, 100], teal_color)
 myGame.add_player([myGame.screen_width, myGame.screen_height], yellowish_color)
 
