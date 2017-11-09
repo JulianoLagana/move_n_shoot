@@ -56,13 +56,9 @@ class Player:
         - crosshair_img: Image of the player's crosshair. Surface.
         - bullet: The bullet of the player. Bullet object.
         - score: The player's score. Number.
-        - decide_action: Function to decide the player's action, given a Game instance. Function that takes a game
-        instance as argument, and returns a list of actions to be taken which will be interpreted by the update()
-        method of this class.
     """
 
-    def __init__(self, position=None, sz=100, decide_action_fun=None,
-                 player_color=None):
+    def __init__(self, position=None, sz=100, player_color=None):
         """
         Initialize a player instance.
 
@@ -70,11 +66,6 @@ class Player:
         :type position: List with two elements.
         :param sz: Length of the side of the player's square. Default value is 100.
         :type sz: Number.
-        :param decide_action_fun: Function that the will be called to decide the player's actions at each time step.
-            Default value is a function that always returns no actions.
-        :type decide_action_fun: Function that takes two arguments, the player's index in the Game instance, and the
-            Game instance to which the player belongs to. Returns a list of actions to be interpreted by the
-            update() method of that Game instance.
         :param player_color: RGB color for the player. Default value is [255, 255, 255]
         :type player_color: Array with three values.
         """
@@ -119,20 +110,6 @@ class Player:
 
         # Bullet position initialization
         self.bullet = Bullet(player_color)
-
-        # If no function for deciding actions is provided, specify one that always decides to not act
-        if decide_action_fun is None:
-            def no_action(player_index, game_instance):
-                del player_index # unused argument
-                del game_instance # unused argument
-                action_names = ['up', 'down', 'left', 'right', 'shoot',
-                                'ch_up', 'ch_down', 'ch_left', 'ch_right', 'ch_mouse']
-                actions = {}
-                for action in action_names:
-                    actions[action] = False
-                return actions
-            decide_action_fun = no_action
-        self.decide_action = decide_action_fun
 
         # Points initialization
         self.score = 0
@@ -305,13 +282,10 @@ class Game:
         pygame.font.init()
         self.my_font = pygame.font.SysFont('Monospace', 40)
 
-    def add_player(self, decide_action_fun=None, position=None, player_color=None):
+    def add_player(self, position=None, player_color=None):
         """
         Adds a new player to the game. Maximum 2 players in the game.
 
-        :param decide_action_fun: Function that the player will use to decide its actions
-        :type decide_action_fun: Function that takes a Game instance as argument, and outputs a list of actions, to be
-            interpreted by the players update() method.
         :param position: Initial position for the player being added to the game. Default value is [0,0].
         :type position: Array with two elements.
         :param player_color: RGB color of the player being added. Default value is [255, 255, 255]
@@ -319,7 +293,7 @@ class Game:
         """
 
         if len(self.players) < 2:
-            self.players.append(Player(position, decide_action_fun=decide_action_fun, player_color=player_color))
+            self.players.append(Player(position, player_color=player_color))
 
     def handle_events(self):
         """
@@ -347,12 +321,11 @@ class Game:
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 self.key_pressed['mouse_click'] = False
 
-    def update_physics(self):
+    def update_physics(self, player_actions):
         """
         Updates the game's current state, using all the player's actions and the game's physics.
 
-        Every player will have the decide_action() method called to determine its actions, and then the update() method
-        to perform these.
+        Every player will have the update() method called, to decide how to parse their actions.
 
         Physics:
             - Crosshair position is limited to the screen.
@@ -367,7 +340,7 @@ class Game:
         for i, player in enumerate(self.players):
 
             # Decide actions for player
-            actions = player.decide_action(i, self)
+            actions = player_actions[i]
 
             # Update player using chosen actions
             player.update(actions, delta_t)
@@ -500,43 +473,64 @@ class Game:
         self.clock.tick(60)
 
 
-def create_human_player_binding():
+def get_human_player_action(game_instance):
     """
-    Used to create key-presses bindings to a player.
+    Returns the actions for a human player. The actions are determined by which of the bound keys were pressed, and
+    the current mouse position.
 
-    The player's movement is bound to the keys up, down, left and right. Shooting is bound to the space key. Also,
-    always moves the player's crosshair to the current mouse position.
+    Arrow keys: movement
+    Mouse: crosshair movement
+    Mouse left-click: shoot
 
-    :return: Function that binds key presses and mouse movement to the player's actions. To be passed to the Player
-        constructor class as the 'decide_action_fun' argument.
-    :rtype: Function that takes a Game instance as argument, and returns a list of actions to be taken at each time
-        step.
+    :param game_instance: The Game instance that the player belongs to.
+    :type game_instance: Game
+    :return: Dictionary of actions that this player will take this turn. Keys are the actions, values are booleans
+        representing whether or not that action will be taken this turn.
+    :rtype: Dictionary
     """
-    def fun(player_index, game_instance):
-        del player_index  # unused argument
-        action_names = ['up', 'down', 'left', 'right', 'shoot']
-        key_bindings = [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT, 'mouse_click']
-        actions = {}
-        for action_name, key_binding in zip(action_names, key_bindings):
-            actions[action_name] = game_instance.key_pressed[key_binding]
 
-        actions['ch_mouse'] = True
-        return actions
-    return fun
+    action_names = ['up', 'down', 'left', 'right', 'shoot']
+    key_bindings = [pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT, 'mouse_click']
+    actions = {}
+    for action_name, key_binding in zip(action_names, key_bindings):
+        actions[action_name] = game_instance.key_pressed[key_binding]
+
+    actions['ch_mouse'] = True
+    return actions
 
 
-def create_random_player_binding(prob_action=0.05):
+def create_random_player_action_generator(prob_action=0.05):
+    """
+    Creates an action generator for a random player.
 
-    def fun(player_index, game_instance):
-        del player_index  # unused argument
-        del game_instance  # unused argument
+    It's necessary to have this layer of abstraction above the get_random_player_action function, so that two instances
+    of this function can be used in parallel (otherwise both would share the same `old_actions` attribute.
+    :param prob_action: Probability that an action will take the opposite value it had the last time the
+    get_random_player_action function was called.
+    :return: An instance of the get_random_player_action function.
+    """
+
+    def get_random_player_action():
+        """
+        Returns the actions for a random player.
+
+        For each key in the dictionary, with probability `prob_action`, the
+        corresponding value will be the opposite of the value chosen the last time this functions was called. With
+        probability 1-`prob_action`, it will have the same value as before. All values are False the first time this
+        function is called.
+
+        :return: Dictionary of actions that this player will take this turn. Keys are the actions, values are booleans
+            representing whether or not that action will be taken this turn.
+        :rtype: Dictionary
+        """
+
         action_names = ['up', 'down', 'left', 'right', 'shoot', 'ch_up', 'ch_down', 'ch_left', 'ch_right']
 
         # Initialize old actions
-        if not hasattr(fun, 'old_actions'):
-            fun.old_actions = {}
+        if not hasattr(get_random_player_action, 'old_actions'):
+            get_random_player_action.old_actions = {}
             for action in action_names:
-                fun.old_actions[action] = False
+                get_random_player_action.old_actions[action] = False
 
         # For each action
         actions = {}
@@ -545,31 +539,53 @@ def create_random_player_binding(prob_action=0.05):
             # With probability 'prob_action', do the opposite of what was done in the last call of this function
             r = np.random.rand()
             if r < prob_action:
-                actions[action] = not fun.old_actions[action]
+                actions[action] = not get_random_player_action.old_actions[action]
             else:
-                actions[action] = fun.old_actions[action]
+                actions[action] = get_random_player_action.old_actions[action]
 
         # Don't use the mouse
         actions['ch_mouse'] = False
 
         # Update the old actions
-        fun.old_actions = actions.copy()
+        get_random_player_action.old_actions = actions.copy()
 
         return actions
 
-    return fun
+    return get_random_player_action
 
 
-def create_simple_ai_binding(prob_action=0.05):
+def create_simple_ai_action_generator(prob_action=0.05):
+    """
+    Creates an action generator for a simple AI player.
 
-    def fun(player_index, game_instance):
+    It's necessary to have this layer of abstraction above the get_simple_ai_player_action function, so that two
+    instances of this function can be used in parallel (otherwise both would share the same `old_actions` attribute.
+    :param prob_action: Probability that an action will take the opposite value it had the last time the
+    get_simple_ai_action function was called.
+    :return: An instance of the get_simple_ai_action function.
+    """
+    def get_simple_ai_action(player_index, game_instance):
+        """
+        Returns the actions for a simple AI player.
+
+        Player movement and deciding when to shoot are done exactly like the get_random_player_action implementation.
+        However, now the crosshair movement always goes in the direction of the player
+
+        :param player_index: The index of the player that this AI will play.
+        :type player_index: Number
+        :param game_instance: The Game instance that the player belongs to.
+        :type game_instance: Game
+        :return: Dictionary of actions that this player will take this turn. Keys are the actions, values are booleans
+            representing whether or not that action will be taken this turn.
+        :rtype: Dictionary
+        """
         action_names = ['up', 'down', 'left', 'right', 'shoot']
 
         # Initialize old actions
-        if not hasattr(fun, 'old_actions'):
-            fun.old_actions = {}
+        if not hasattr(get_simple_ai_action, 'old_actions'):
+            get_simple_ai_action.old_actions = {}
             for action in action_names:
-                fun.old_actions[action] = False
+                get_simple_ai_action.old_actions[action] = False
 
         # For each action
         actions = {}
@@ -578,9 +594,9 @@ def create_simple_ai_binding(prob_action=0.05):
             # With probability 'prob_action', do the opposite of what was done in the last call of this function
             r = np.random.rand()
             if r < prob_action:
-                actions[action] = not fun.old_actions[action]
+                actions[action] = not get_simple_ai_action.old_actions[action]
             else:
-                actions[action] = fun.old_actions[action]
+                actions[action] = get_simple_ai_action.old_actions[action]
 
         # Don't use the mouse
         actions['ch_mouse'] = False
@@ -593,23 +609,45 @@ def create_simple_ai_binding(prob_action=0.05):
         actions['ch_down'] = game_instance.players[1-i].position[1] > game_instance.players[i].crosshair[1]
 
         # Update the old actions
-        fun.old_actions = actions.copy()
+        get_simple_ai_action.old_actions = actions.copy()
 
         return actions
 
-    return fun
+    return get_simple_ai_action
 
 
-def create_not_so_simple_ai_binding(prob_action=0.05):
+def create_not_so_simple_ai_action_generator(prob_action=0.05):
+    """
+    Creates an action generator for a not so simple AI player.
 
-    def fun(player_index, game_instance):
+    It's necessary to have this layer of abstraction above the get_not_so_simple_ai_player_action function, so that two
+    instances of this function can be used in parallel (otherwise both would share the same `old_actions` attribute.
+    :param prob_action: Probability that an action will take the opposite value it had the last time the
+    get_not_so_simple_ai_action function was called.
+    :return: An instance of the get_simple_ai_action function.
+    """
+    def get_not_so_simple_ai_action(player_index, game_instance):
+        """
+         Returns the actions for a simple AI player.
+
+         Player movement and deciding when to shoot are done exactly like the get_random_player_action implementation.
+         However, now the crosshair is positioned so as to intercept the oponent's movement, assuming constant velocity.
+
+         :param player_index: The index of the player that this AI will play.
+         :type player_index: Number
+         :param game_instance: The Game instance that the player belongs to.
+         :type game_instance: Game
+         :return: Dictionary of actions that this player will take this turn. Keys are the actions, values are booleans
+             representing whether or not that action will be taken this turn.
+         :rtype: Dictionary
+         """
         action_names = ['up', 'down', 'left', 'right', 'shoot']
 
         # Initialize old actions
-        if not hasattr(fun, 'old_actions'):
-            fun.old_actions = {}
+        if not hasattr(get_not_so_simple_ai_action, 'old_actions'):
+            get_not_so_simple_ai_action.old_actions = {}
             for action in action_names:
-                fun.old_actions[action] = False
+                get_not_so_simple_ai_action.old_actions[action] = False
 
         # For each action
         actions = {}
@@ -618,9 +656,9 @@ def create_not_so_simple_ai_binding(prob_action=0.05):
             # With probability 'prob_action', do the opposite of what was done in the last call of this function
             r = np.random.rand()
             if r < prob_action:
-                actions[action] = not fun.old_actions[action]
+                actions[action] = not get_not_so_simple_ai_action.old_actions[action]
             else:
-                actions[action] = fun.old_actions[action]
+                actions[action] = get_not_so_simple_ai_action.old_actions[action]
 
         # Don't use the mouse
         actions['ch_mouse'] = False
@@ -645,11 +683,11 @@ def create_not_so_simple_ai_binding(prob_action=0.05):
         actions['ch_down'] = position_to_aim[1] > game_instance.players[i].crosshair[1]
 
         # Update the old actions
-        fun.old_actions = actions.copy()
+        get_not_so_simple_ai_action.old_actions = actions.copy()
 
         return actions
 
-    return fun
+    return get_not_so_simple_ai_action
 
 
 def dot(a, b):
