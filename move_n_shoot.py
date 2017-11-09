@@ -489,6 +489,20 @@ class Game:
         pygame.display.flip()
         self.clock.tick(60)
 
+    def reset_game(self):
+
+        # For all players
+        for player in self.players:
+
+            # Reset score and bullet
+            player.score = 0
+            player.bullet.reset_bullet()
+
+            # Randomizes position. Reset velocity and acceleration
+            player.position = [np.random.randint(0,self.screen_width), np.random.randint(0,self.screen_height)]
+            player.velocity = [0, 0]
+            player.acceleration = [0, 0]
+
     @staticmethod
     def get_names_possible_actions():
 

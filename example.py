@@ -5,7 +5,8 @@ from move_n_shoot import create_not_so_simple_ai_action_generator
 # Constants
 teal_color = [0, 188, 212]
 yellowish_color = [255, 235, 59]
-max_score = 100
+max_score = 3
+n_games = 2
 
 # Initializations
 myGame = Game(video_mode=True)
@@ -15,20 +16,23 @@ myGame.add_player([myGame.screen_width, myGame.screen_height], yellowish_color)
 # Create the random action generator functions
 get_not_so_simple_ai_action = create_not_so_simple_ai_action_generator()
 
-# Run the game until any of the players achieve the max_score
-while (myGame.players[0].score < max_score) and (myGame.players[1].score < max_score):
+# Play for `n_games` games
+for n in range(n_games):
 
-    myGame.handle_events()
+    # Run the game until any of the players achieve the max_score
+    while (myGame.players[0].score < max_score) and (myGame.players[1].score < max_score):
 
-    a1 = get_human_player_action(myGame)
-    a2 = get_not_so_simple_ai_action(1, myGame)
+        myGame.handle_events()
 
-    myGame.update_physics([a1, a2])
-    myGame.draw_frame()
+        a1 = get_human_player_action(myGame)
+        a2 = get_not_so_simple_ai_action(1, myGame)
 
-# Print results
-print('Final score')
-print('Player 1:', myGame.players[0].score)
-print('Player 2:', myGame.players[1].score)
+        myGame.update_physics([a1, a2])
+        myGame.draw_frame()
 
+    # Print results
+    print('Final score for game', n+1)
+    print('Player 1:', myGame.players[0].score)
+    print('Player 2:', myGame.players[1].score)
 
+    myGame.reset_game()
