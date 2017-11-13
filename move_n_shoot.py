@@ -558,7 +558,7 @@ def create_random_player_action_generator(prob_action=0.05):
     :return: An instance of the get_random_player_action function.
     """
 
-    def get_random_player_action():
+    def get_random_player_action(player_index, game_instance):
         """
         Returns the actions for a random player.
 
