@@ -390,8 +390,8 @@ class Game:
                     and player.bullet.was_shot:
                 player.bullet.reset_bullet()
 
-            # Check bullet collision with the other player
-            if r.colliderect(self.players[1-i].get_rect()):
+            # Check bullet collision with the other player (if there is one)
+            if len(self.players) > 1 and r.colliderect(self.players[1-i].get_rect()):
                 player.score += 1
                 player.bullet.reset_bullet()
 
@@ -489,10 +489,11 @@ class Game:
             player.draw(self.screen)
 
         # Draw players' scores
-        score_player1 = self.my_font.render('P1: ' + str(self.players[0].score), False, (255, 255, 255))
-        score_player2 = self.my_font.render('P2: ' + str(self.players[1].score), False, (255, 255, 255))
-        self.screen.blit(score_player1, (0, 0))
-        self.screen.blit(score_player2, (0, 40))
+        text_before_score = ['P1: ', 'P2: ']
+        position_to_display = [(0, 0), (0, 40)]
+        for i in range(len(self.players)):
+            score_player = self.my_font.render(text_before_score[i] + str(self.players[i].score), False, (255, 255, 255))
+            self.screen.blit(score_player, position_to_display[i])
 
         # Flip the display and limit frame-rate
         pygame.display.flip()
